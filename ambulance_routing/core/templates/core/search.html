@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Ambulance — String Matching Search</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f3ea;--bg2:#fffdf7;--bg3:#ece7d9;--border:rgba(66,94,74,.18);--text:#1f2a22;--text2:#526357;--text3:#8a9a8f;--red:#c44536;--amber:#c58a2b;--green:#2f6f4f;--blue:#3f7a8c;--purple:#6e5a8a;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:16px;}
+.logo{font-size:15px;font-weight:700;}.logo span{color:var(--red);}
+nav a{font-size:12px;color:var(--text2);text-decoration:none;padding:5px 10px;border-radius:5px;border:1px solid transparent;transition:.2s;}
+nav a:hover,nav a.active{border-color:var(--border);color:var(--text);background:var(--bg3);}
+nav{display:flex;gap:4px;margin-left:8px;}
+.container{max-width:960px;margin:0 auto;padding:24px 20px;}
+h2{font-size:22px;font-weight:700;margin-bottom:6px;}
+.subtitle{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.6;}
+/* Search box */
+.search-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;}
+.search-row{display:flex;gap:10px;align-items:center;}
+.search-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:14px;font-family:'Space Grotesk',sans-serif;outline:none;transition:.2s;}
+.search-input:focus{border-color:var(--red);}
+.btn{padding:10px 20px;border-radius:8px;border:none;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;background:var(--red);color:#fff;transition:.2s;}
+.btn:hover{opacity:.85;}
+.quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.quick-btn{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:.2s;}
+.quick-btn:hover{color:var(--text);border-color:rgba(255,255,255,.2);}
+/* Stats */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.algo-panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.algo-header{padding:12px 16px;border-bottom:1px solid var(--border);}
+.algo-name{font-size:15px;font-weight:700;}
+.algo-cx{font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.8;margin-top:2px;}
+.algo-body{padding:14px 16px;}
+.stat-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+.stat-row:last-child{border:none;}
+.stat-key{color:var(--text2);}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;}
+/* Results */
+.results-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px;}
+.results-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.results-title{font-size:14px;font-weight:600;}
+.results-count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);}
+.result-item{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:12px;}
+.result-item:last-child{border:none;}
+.result-icon{font-size:18px;flex-shrink:0;}
+.result-name{font-size:14px;font-weight:500;color:var(--text);}
+.result-name em{background:rgba(255,71,87,.2);color:var(--red);font-style:normal;border-radius:2px;padding:0 2px;}
+.result-label{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:2px;}
+.no-results{padding:40px;text-align:center;color:var(--text3);font-size:13px;}
+/* Complexity comparison */
+.cx-table{width:100%;border-collapse:collapse;background:var(--bg2);border-radius:12px;overflow:hidden;border:1px solid var(--border);}
+.cx-table th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);}
+.cx-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}
+.cx-table tr:last-child td{border:none;}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
+.insight{background:rgba(79,195,247,.07);border:1px solid rgba(79,195,247,.2);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--text);line-height:1.7;margin-bottom:20px;}
+.insight strong{color:var(--blue);}
+.loading{font-size:13px;color:var(--amber);font-family:'JetBrains Mono',monospace;padding:20px 0;text-align:center;display:none;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">🚑 <span>Smart</span>Ambulance</div>
+  <nav>
+    <a href="/">Simulation</a>
+    <a href="/compare/">Compare</a>
+    <a href="/traversal/">BFS/DFS</a>
+    <a href="/mst/">MST</a>
+    <a href="/sorting/">Sorting</a>
+    <a href="/search/" class="active">Search</a>
+    <a href="/multistop/">Multi-Stop</a>
+  </nav>
+</div>
+<div class="container">
+  <h2>Hospital Search — String Matching</h2>
+  <p class="subtitle">
+    Search hospital names using <strong style="color:var(--blue)">KMP (Knuth-Morris-Pratt)</strong>
+    and <strong style="color:var(--purple)">Rabin-Karp</strong> pattern matching algorithms.
+    Both run on the same query simultaneously — compare total comparisons and execution time.
+    Real-world use: fast patient record search and route log pattern matching in emergency dispatch.
+  </p>
+
+  <div class="search-card">
+    <div class="search-row">
+      <input class="search-input" id="queryInput" type="text" placeholder="Type hospital name or pattern (e.g. 'General', 'Mayo', 'Services')..." oninput="onType()" onkeydown="if(event.key==='Enter')runSearch()">
+      <button class="btn" onclick="runSearch()">🔎 Search</button>
+    </div>
+    <div class="quick-btns">
+      <span style="font-size:11px;color:var(--text3);margin-right:4px;">Quick:</span>
+      <button class="quick-btn" onclick="setQuery('General')">General</button>
+      <button class="quick-btn" onclick="setQuery('Hospital')">Hospital</button>
+      <button class="quick-btn" onclick="setQuery('Medical')">Medical</button>
+      <button class="quick-btn" onclick="setQuery('Services')">Services</button>
+      <button class="quick-btn" onclick="setQuery('Center')">Center</button>
+      <button class="quick-btn" onclick="setQuery('a')">a (all containing 'a')</button>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">Running KMP and Rabin-Karp simultaneously...</div>
+
+  <div id="resultSection" style="display:none">
+
+    <div class="two-col" id="statsGrid"></div>
+
+    <div class="insight" id="insightBox"></div>
+
+    <div class="results-section">
+      <div class="results-header">
+        <span class="results-title">Matching Hospitals</span>
+        <span class="results-count" id="matchCount">0 matches</span>
+      </div>
+      <div id="resultsList"></div>
+    </div>
+
+  </div>
+
+  <!-- Static complexity reference — always visible -->
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-top:8px;">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;font-weight:600;">Algorithm Complexity Reference</span>
+    </div>
+    <table class="cx-table">
+      <thead>
+        <tr>
+          <th>Algorithm</th>
+          <th>Preprocessing</th>
+          <th>Search (Best)</th>
+          <th>Search (Worst)</th>
+          <th>Space</th>
+          <th>How it works</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong style="color:var(--blue)">KMP</strong></td>
+          <td class="mono" style="color:var(--blue)">O(m)</td>
+          <td class="mono">O(n)</td>
+          <td class="mono">O(n+m)</td>
+          <td class="mono">O(m)</td>
+          <td style="color:var(--text2);font-size:12px">Builds failure function from pattern. Never backtracks in text. Linear guaranteed.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--purple)">Rabin-Karp</strong></td>
+          <td class="mono" style="color:var(--purple)">O(m)</td>
+          <td class="mono">O(n+m)</td>
+          <td class="mono">O(nm)</td>
+          <td class="mono">O(1)</td>
+          <td style="color:var(--text2);font-size:12px">Rolling hash of text window. Hash match → verify. Great for multiple patterns.</td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--text3)">Naïve/Brute</strong></td>
+          <td class="mono" style="color:var(--text3)">O(1)</td>
+          <td class="mono" style="color:var(--text3)">O(n)</td>
+          <td class="mono" style="color:var(--red)">O(nm)</td>
+          <td class="mono" style="color:var(--text3)">O(1)</td>
+          <td style="color:var(--text2);font-size:12px">Check every position. Backtracks. Worst case with repeated chars.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="padding:12px 16px;font-size:12px;color:var(--text3)">
+      n = length of text being searched &nbsp;·&nbsp; m = length of search pattern
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+let debounceTimer = null;
+
+function setQuery(q) {
+  document.getElementById('queryInput').value = q;
+  runSearch();
+}
+
+function onType() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(runSearch, 400);
+}
+
+function highlight(text, query) {
+  if (!query) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(escaped, 'gi'), m => `<em>${m}</em>`);
+}
+
+async function runSearch() {
+  const query = document.getElementById('queryInput').value.trim();
+  if (!query) { document.getElementById('resultSection').style.display = 'none'; return; }
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('resultSection').style.display = 'none';
+  try {
+    const r = await fetch(`${API}/api/search/`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({query})
+    });
+    const data = await r.json();
+    document.getElementById('loading').style.display = 'none';
+    renderResults(data, query);
+    document.getElementById('resultSection').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    console.error(e);
+  }
+}
+
+function renderResults(data, query) {
+  // API returns: {kmp_results, rk_results, kmp_stats, rk_stats}
+  const kmpStats = data.kmp_stats || {};
+  const rkStats = data.rk_stats || {};
+  const matches = data.kmp_results || data.results || [];
+
+  // Stats
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="algo-panel">
+      <div class="algo-header">
+        <div class="algo-name" style="color:var(--blue)">KMP — Knuth-Morris-Pratt</div>
+        <div class="algo-cx" style="color:var(--blue)">O(n + m) — No backtracking</div>
+      </div>
+      <div class="algo-body">
+        <div class="stat-row"><span class="stat-key">Matches Found</span><span class="stat-val" style="color:var(--green)">${kmpStats.matches_found ?? matches.length}</span></div>
+        <div class="stat-row"><span class="stat-key">Comparisons</span><span class="stat-val">${kmpStats.total_comparisons ?? '—'}</span></div>
+        <div class="stat-row"><span class="stat-key">Time (ms)</span><span class="stat-val" style="color:var(--blue)">${kmpStats.execution_time_ms ?? '—'}</span></div>
+        <div class="stat-row"><span class="stat-key">Preprocessing</span><span class="stat-val">O(m) — failure fn</span></div>
+        <div class="stat-row"><span class="stat-key">Worst Case</span><span class="stat-val" style="color:var(--green)">O(n+m) — guaranteed</span></div>
+        <div class="stat-row"><span class="stat-key">Space</span><span class="stat-val">O(m)</span></div>
+      </div>
+    </div>
+    <div class="algo-panel">
+      <div class="algo-header">
+        <div class="algo-name" style="color:var(--purple)">Rabin-Karp</div>
+        <div class="algo-cx" style="color:var(--purple)">O(n + m) avg — Rolling Hash</div>
+      </div>
+      <div class="algo-body">
+        <div class="stat-row"><span class="stat-key">Matches Found</span><span class="stat-val" style="color:var(--green)">${rkStats.matches_found ?? matches.length}</span></div>
+        <div class="stat-row"><span class="stat-key">Comparisons</span><span class="stat-val">${rkStats.total_comparisons ?? '—'}</span></div>
+        <div class="stat-row"><span class="stat-key">Time (ms)</span><span class="stat-val" style="color:var(--purple)">${rkStats.execution_time_ms ?? '—'}</span></div>
+        <div class="stat-row"><span class="stat-key">Preprocessing</span><span class="stat-val">O(m) — hash pattern</span></div>
+        <div class="stat-row"><span class="stat-key">Worst Case</span><span class="stat-val" style="color:var(--amber)">O(nm) — hash collisions</span></div>
+        <div class="stat-row"><span class="stat-key">Space</span><span class="stat-val">O(1) — rolling hash</span></div>
+      </div>
+    </div>
+  `;
+
+  // Insight
+  const kmpTime = kmpStats.execution_time_ms || 0;
+  const rkTime = rkStats.execution_time_ms || 0;
+  const faster = kmpTime <= rkTime ? 'KMP' : 'Rabin-Karp';
+  document.getElementById('insightBox').innerHTML = `
+    <strong>Analysis for pattern "${query}":</strong>
+    <strong>${faster}</strong> was faster in this run.
+    KMP builds a <em>failure function</em> that lets it skip re-checking characters it's already matched —
+    guaranteeing O(n+m) in all cases. Rabin-Karp uses a <em>rolling hash</em> — O(1) per position comparison,
+    but must verify hash collisions character-by-character, making its worst case O(nm).
+    <strong>KMP is preferred for single-pattern search; Rabin-Karp shines when searching for multiple patterns simultaneously.</strong>
+  `;
+
+  // Results list
+  document.getElementById('matchCount').textContent = `${matches.length} match${matches.length !== 1 ? 'es' : ''}`;
+  if (!matches.length) {
+    document.getElementById('resultsList').innerHTML = `<div class="no-results">No hospitals match "<strong>${query}</strong>"</div>`;
+    return;
+  }
+  document.getElementById('resultsList').innerHTML = matches.map(h => `
+    <div class="result-item">
+      <div class="result-icon">🏥</div>
+      <div>
+        <div class="result-name">${highlight(h.name || '—', query)}</div>
+        <div class="result-label">${h.label || ''} · Node ${h.node_id || h.id || '—'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
