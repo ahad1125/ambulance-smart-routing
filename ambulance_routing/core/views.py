@@ -13,8 +13,6 @@ from core.algorithms.graph_builder import build_graph
 from core.algorithms.shortest_path import dijkstra, astar, bellman_ford, brute_force
 from core.algorithms.traversal import bfs, dfs
 from core.algorithms.mst import prims, kruskals
-# from core.algorithms.sorting import benchmark_sort
-# from core.algorithms.string_matching import search_hospitals
 from core.algorithms.dp_multistop import dp_multistop, brute_force_multistop, build_dist_matrix
 
 
@@ -42,10 +40,6 @@ def page_traversal(request):
     return render(request, 'core/traversal.html')
 def page_mst(request):
     return render(request, 'core/mst.html')
-# def page_sorting(request):
-#     return render(request, 'core/sorting.html')
-# def page_search(request):
-#     return render(request, 'core/search.html')
 def page_multistop(request):
     return render(request, 'core/multistop.html')
 
@@ -423,56 +417,6 @@ def run_mst(request):
     prim_result["mst_edges_enriched"] = enrich(prim_result.get("mst_edges", []), graph)
     kruskal_result["mst_edges_enriched"] = enrich(kruskal_result.get("mst_edges", []), graph)
     return json_ok({"prims": prim_result, "kruskals": kruskal_result})
-
-
-# @csrf_exempt
-# def sort_hospitals_view(request):
-#     if request.method == "OPTIONS":
-#         return cors(JsonResponse({}))
-#     try:
-#         data = json.loads(request.body)
-#     except Exception:
-#         return json_err("Invalid JSON")
-#     source_id = data.get("source")
-#     if source_id is None:
-#         return json_err("source required")
-#     try:
-#         source_id = int(source_id)
-#     except Exception:
-#         return json_err("source must be integer")
-#     graph = build_graph()
-#     hospital_list = []
-#     for h in Hospital.objects.select_related('node').all():
-#         node_id = h.node.id
-#         if node_id in graph.adj and source_id in graph.adj:
-#             r = dijkstra(graph, source_id, node_id)
-#             dist = r.get("distance", -1)
-#             hospital_list.append({"id": h.id, "name": h.name, "node_id": node_id,
-#                                    "label": h.node.label, "latitude": h.node.latitude, "longitude": h.node.longitude,
-#                                    "distance": dist if dist != -1 else 999999,
-#                                    "distance_display": f"{dist:.2f} km" if dist != -1 else "Unreachable"})
-#     bench = benchmark_sort(hospital_list, key=lambda x: x["distance"])
-#     return json_ok({"source_node": source_id, "hospital_count": len(hospital_list),
-#                     "merge_sort": bench["merge_sort"], "quick_sort": bench["quick_sort"], "n": len(hospital_list)})
-
-
-# @csrf_exempt
-# def search_hospital_names(request):
-#     if request.method == "OPTIONS":
-#         return cors(JsonResponse({}))
-#     try:
-#         data = json.loads(request.body)
-#     except Exception:
-#         return json_err("Invalid JSON")
-#     query = data.get("query", "").strip()
-#     if not query:
-#         return json_err("query required")
-#     hospital_objects = []
-#     for h in Hospital.objects.select_related('node').all():
-#         hospital_objects.append({"id": h.id, "name": h.name, "node_id": h.node.id,
-#                                   "label": h.node.label, "latitude": h.node.latitude, "longitude": h.node.longitude})
-#     result = search_hospitals(hospital_objects, query)
-#     return json_ok({"query": query, "results": result})
 
 
 @csrf_exempt

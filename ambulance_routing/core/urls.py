@@ -10,8 +10,6 @@ STRUCTURE:
   /compare/             → Algorithm Comparison page
   /traversal/           → BFS/DFS Network Analysis page
   /mst/                 → Minimum Spanning Tree page
-  /sorting/             → Sorting Benchmark page
-  /search/              → Hospital Search (String Matching) page
   /multistop/           → Multi-Stop DP Routing page
 
   /api/graph/           → Graph data (nodes, edges, hospitals, ambulances)
@@ -22,8 +20,6 @@ STRUCTURE:
   /api/bfs/             → BFS traversal from a start node
   /api/dfs/             → DFS traversal from a start node
   /api/mst/             → Prim's and Kruskal's MST
-  /api/sort/            → Sort hospitals benchmark (Merge Sort vs Quick Sort)
-  /api/search/          → Hospital name search (KMP + Rabin-Karp)
   /api/multistop/       → Multi-stop route (DP Held-Karp + Brute Force)
   /api/traffic/         → Update edge traffic weight
 """
@@ -49,8 +45,6 @@ urlpatterns = [
     path('api/bfs/',       views.run_bfs,               name='api-bfs'),
     path('api/dfs/',       views.run_dfs,               name='api-dfs'),
     path('api/mst/',       views.run_mst,               name='api-mst'),
-    # path('api/sort/',      views.sort_hospitals_view,   name='api-sort'),
-    # path('api/search/',    views.search_hospital_names, name='api-search'),
     path('api/multistop/', views.multistop_route,       name='api-multistop'),
     path('api/traffic/',   views.update_traffic,        name='api-traffic'),
 ]
