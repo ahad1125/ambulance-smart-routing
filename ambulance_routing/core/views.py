@@ -13,8 +13,8 @@ from core.algorithms.graph_builder import build_graph
 from core.algorithms.shortest_path import dijkstra, astar, bellman_ford, brute_force
 from core.algorithms.traversal import bfs, dfs
 from core.algorithms.mst import prims, kruskals
-from core.algorithms.sorting import benchmark_sort
-from core.algorithms.string_matching import search_hospitals
+# from core.algorithms.sorting import benchmark_sort
+# from core.algorithms.string_matching import search_hospitals
 from core.algorithms.dp_multistop import dp_multistop, brute_force_multistop, build_dist_matrix
 
 
@@ -24,21 +24,30 @@ def cors(response):
     response["Access-Control-Allow-Headers"] = "Content-Type"
     return response
 
-def json_ok(data): return cors(JsonResponse(data, safe=False))
-def json_err(msg, status=400): return cors(JsonResponse({"error": msg}, status=status))
+def json_ok(data): 
+    return cors(JsonResponse(data, safe=False))
+def json_err(msg, status=400):
+    return cors(JsonResponse({"error": msg}, status=status))
 
 
 # ─────────────────────────────────────────────────────────────
 # PAGE VIEWS — serve HTML templates
 # ─────────────────────────────────────────────────────────────
 
-def page_index(request):     return render(request, 'core/index.html')
-def page_compare(request):   return render(request, 'core/compare.html')
-def page_traversal(request): return render(request, 'core/traversal.html')
-def page_mst(request):       return render(request, 'core/mst.html')
-def page_sorting(request):   return render(request, 'core/sorting.html')
-def page_search(request):    return render(request, 'core/search.html')
-def page_multistop(request): return render(request, 'core/multistop.html')
+def page_index(request):     
+    return render(request, 'core/index.html')
+def page_compare(request):
+    return render(request, 'core/compare.html')
+def page_traversal(request):
+    return render(request, 'core/traversal.html')
+def page_mst(request):
+    return render(request, 'core/mst.html')
+# def page_sorting(request):
+#     return render(request, 'core/sorting.html')
+# def page_search(request):
+#     return render(request, 'core/search.html')
+def page_multistop(request):
+    return render(request, 'core/multistop.html')
 
 
 @csrf_exempt
@@ -121,6 +130,7 @@ def find_route(request):
             path_coords.append({"node_id": node_id, "lat": lat, "lon": lon,
                                  "label": graph.node_label.get(node_id, str(node_id))})
     result["path_coords"] = path_coords
+    result["explored_edges_coords"] = _explored_edges_coords(graph, result.get("explored_edges", []))
     result["source"] = source
     result["destination"] = destination
     return json_ok(result)
@@ -136,6 +146,18 @@ def _path_coords(graph, path):
                 "lat": lat,
                 "lon": lon,
                 "label": graph.node_label.get(node_id, str(node_id)),
+            })
+    return coords
+
+
+def _explored_edges_coords(graph, explored_edges):
+    """Convert (from_id, to_id) tuples to coordinate dicts for frontend visualization."""
+    coords = []
+    for (u, v) in explored_edges:
+        if u in graph.coords and v in graph.coords:
+            coords.append({
+                "from_lat": graph.coords[u][0], "from_lon": graph.coords[u][1],
+                "to_lat": graph.coords[v][0], "to_lon": graph.coords[v][1],
             })
     return coords
 
@@ -166,6 +188,7 @@ def auto_dispatch(request):
 
     algo_map = {"dijkstra": dijkstra, "astar": astar, "bellman_ford": bellman_ford, "brute_force": brute_force}
     fn = algo_map.get(algorithm)
+    
     if fn is None:
         return json_err(f"Unknown algorithm: {algorithm}")
 
@@ -263,6 +286,10 @@ def auto_dispatch(request):
         },
         "path": combined_path,
         "path_coords": _path_coords(graph, combined_path),
+        "explored_edges_coords": (
+            _explored_edges_coords(graph, best_ambulance_route.get("explored_edges", []))
+            + _explored_edges_coords(graph, best_hospital_route.get("explored_edges", []))
+        ),
         "distance": total_distance,
         "nodes_visited": total_nodes,
         "edges_explored": total_edges,
@@ -398,54 +425,54 @@ def run_mst(request):
     return json_ok({"prims": prim_result, "kruskals": kruskal_result})
 
 
-@csrf_exempt
-def sort_hospitals_view(request):
-    if request.method == "OPTIONS":
-        return cors(JsonResponse({}))
-    try:
-        data = json.loads(request.body)
-    except Exception:
-        return json_err("Invalid JSON")
-    source_id = data.get("source")
-    if source_id is None:
-        return json_err("source required")
-    try:
-        source_id = int(source_id)
-    except Exception:
-        return json_err("source must be integer")
-    graph = build_graph()
-    hospital_list = []
-    for h in Hospital.objects.select_related('node').all():
-        node_id = h.node.id
-        if node_id in graph.adj and source_id in graph.adj:
-            r = dijkstra(graph, source_id, node_id)
-            dist = r.get("distance", -1)
-            hospital_list.append({"id": h.id, "name": h.name, "node_id": node_id,
-                                   "label": h.node.label, "latitude": h.node.latitude, "longitude": h.node.longitude,
-                                   "distance": dist if dist != -1 else 999999,
-                                   "distance_display": f"{dist:.2f} km" if dist != -1 else "Unreachable"})
-    bench = benchmark_sort(hospital_list, key=lambda x: x["distance"])
-    return json_ok({"source_node": source_id, "hospital_count": len(hospital_list),
-                    "merge_sort": bench["merge_sort"], "quick_sort": bench["quick_sort"], "n": len(hospital_list)})
+# @csrf_exempt
+# def sort_hospitals_view(request):
+#     if request.method == "OPTIONS":
+#         return cors(JsonResponse({}))
+#     try:
+#         data = json.loads(request.body)
+#     except Exception:
+#         return json_err("Invalid JSON")
+#     source_id = data.get("source")
+#     if source_id is None:
+#         return json_err("source required")
+#     try:
+#         source_id = int(source_id)
+#     except Exception:
+#         return json_err("source must be integer")
+#     graph = build_graph()
+#     hospital_list = []
+#     for h in Hospital.objects.select_related('node').all():
+#         node_id = h.node.id
+#         if node_id in graph.adj and source_id in graph.adj:
+#             r = dijkstra(graph, source_id, node_id)
+#             dist = r.get("distance", -1)
+#             hospital_list.append({"id": h.id, "name": h.name, "node_id": node_id,
+#                                    "label": h.node.label, "latitude": h.node.latitude, "longitude": h.node.longitude,
+#                                    "distance": dist if dist != -1 else 999999,
+#                                    "distance_display": f"{dist:.2f} km" if dist != -1 else "Unreachable"})
+#     bench = benchmark_sort(hospital_list, key=lambda x: x["distance"])
+#     return json_ok({"source_node": source_id, "hospital_count": len(hospital_list),
+#                     "merge_sort": bench["merge_sort"], "quick_sort": bench["quick_sort"], "n": len(hospital_list)})
 
 
-@csrf_exempt
-def search_hospital_names(request):
-    if request.method == "OPTIONS":
-        return cors(JsonResponse({}))
-    try:
-        data = json.loads(request.body)
-    except Exception:
-        return json_err("Invalid JSON")
-    query = data.get("query", "").strip()
-    if not query:
-        return json_err("query required")
-    hospital_objects = []
-    for h in Hospital.objects.select_related('node').all():
-        hospital_objects.append({"id": h.id, "name": h.name, "node_id": h.node.id,
-                                  "label": h.node.label, "latitude": h.node.latitude, "longitude": h.node.longitude})
-    result = search_hospitals(hospital_objects, query)
-    return json_ok({"query": query, "results": result})
+# @csrf_exempt
+# def search_hospital_names(request):
+#     if request.method == "OPTIONS":
+#         return cors(JsonResponse({}))
+#     try:
+#         data = json.loads(request.body)
+#     except Exception:
+#         return json_err("Invalid JSON")
+#     query = data.get("query", "").strip()
+#     if not query:
+#         return json_err("query required")
+#     hospital_objects = []
+#     for h in Hospital.objects.select_related('node').all():
+#         hospital_objects.append({"id": h.id, "name": h.name, "node_id": h.node.id,
+#                                   "label": h.node.label, "latitude": h.node.latitude, "longitude": h.node.longitude})
+#     result = search_hospitals(hospital_objects, query)
+#     return json_ok({"query": query, "results": result})
 
 
 @csrf_exempt
@@ -480,8 +507,44 @@ def multistop_route(request):
             c = g.coords.get(nid, (0, 0))
             out.append({"node_id": nid, "label": g.node_label.get(nid, str(nid)), "lat": c[0], "lon": c[1]})
         return out
+
+    def build_detailed_path(indices, ids, g):
+        """Run Dijkstra between each consecutive pair of stops and collect
+        all intermediate node coordinates so the polyline follows real edges."""
+        if len(indices) < 2:
+            return enrich(indices, ids, g)
+        detailed = []
+        for seg_idx in range(len(indices) - 1):
+            src_id = ids[indices[seg_idx]]
+            dst_id = ids[indices[seg_idx + 1]]
+            leg = dijkstra(g, src_id, dst_id)
+            leg_path = leg.get("path", [])
+            if not leg_path:
+                # Fallback: straight line between the two stops
+                leg_path = [src_id, dst_id]
+            # For the first segment include the start node;
+            # for subsequent segments skip the first node (it's the same
+            # as the previous segment's last node) to avoid duplicates.
+            start = 0 if seg_idx == 0 else 1
+            for node_id in leg_path[start:]:
+                c = g.coords.get(node_id, (0, 0))
+                detailed.append({
+                    "node_id": node_id,
+                    "lat": c[0],
+                    "lon": c[1],
+                    "label": g.node_label.get(node_id, str(node_id)),
+                })
+        return detailed
+
     dp_result["path_coords"] = enrich(dp_result.get("order_indices", []), stop_ids, graph)
     bf_result["path_coords"] = enrich(bf_result.get("order_indices", []), stop_ids, graph)
+
+    # Detailed path that follows actual graph edges (for polyline drawing)
+    dp_result["detailed_path_coords"] = build_detailed_path(
+        dp_result.get("order_indices", []), stop_ids, graph)
+    bf_result["detailed_path_coords"] = build_detailed_path(
+        bf_result.get("order_indices", []), stop_ids, graph)
+
     return json_ok({"stops": stop_names, "stop_ids": stop_ids, "dist_matrix": dist_matrix,
                     "dp": dp_result, "brute_force": bf_result})
 

@@ -105,6 +105,7 @@ def dijkstra(graph, start_id, end_id):
 
     nodes_visited = 0   # How many nodes we fully processed
     edges_explored = 0  # How many edges we examined
+    explored_edges = []  # Track (u, v) for every edge examined — used by frontend visualization
 
     while heap:
         # Pop the node with the smallest current known distance
@@ -124,6 +125,7 @@ def dijkstra(graph, start_id, end_id):
         # Relax all edges leaving u
         for v, weight in graph.get_neighbours(u):
             edges_explored += 1
+            explored_edges.append((u, v))  # Record this edge exploration
             new_dist = dist[u] + weight
 
             # If this path to v is shorter than what we knew before → update
@@ -141,6 +143,7 @@ def dijkstra(graph, start_id, end_id):
         "distance":        dist[end_id] if dist[end_id] != float('inf') else -1,
         "nodes_visited":   nodes_visited,
         "edges_explored":  edges_explored,
+        "explored_edges":  explored_edges,          # For frontend visualization
         "execution_time_ms": elapsed_ms,
         "complexity":      "O((V+E) log V)",       # Shown in the stats panel
         "space":           "O(V)",
@@ -201,6 +204,7 @@ def astar(graph, start_id, end_id):
 
     nodes_visited = 0
     edges_explored = 0
+    explored_edges = []  # Track (u, v) for every edge examined
 
     while heap:
         current_f, u = heapq.heappop(heap)
@@ -217,6 +221,7 @@ def astar(graph, start_id, end_id):
 
         for v, weight in graph.get_neighbours(u):
             edges_explored += 1
+            explored_edges.append((u, v))  # Record this edge exploration
             tentative_g = g_cost[u] + weight
 
             # If this path to v is better → update both g and f costs
@@ -236,6 +241,7 @@ def astar(graph, start_id, end_id):
         "distance":        g_cost[end_id] if g_cost[end_id] != float('inf') else -1,
         "nodes_visited":   nodes_visited,
         "edges_explored":  edges_explored,
+        "explored_edges":  explored_edges,          # For frontend visualization
         "execution_time_ms": elapsed_ms,
         "complexity":      "O(b^d) — near-linear with Euclidean heuristic",
         "space":           "O(V)",
@@ -290,6 +296,7 @@ def bellman_ford(graph, start_id, end_id):
 
     nodes_visited = 0
     edges_explored = 0
+    explored_edges = []  # Track (u, v) for every edge examined
 
     # Relax ALL edges exactly V-1 times
     for iteration in range(V - 1):
@@ -304,6 +311,7 @@ def bellman_ford(graph, start_id, end_id):
 
             for v, weight in graph.get_neighbours(u):
                 edges_explored += 1
+                explored_edges.append((u, v))  # Record this edge exploration
                 new_dist = dist[u] + weight
 
                 if new_dist < dist[v]:
@@ -333,6 +341,7 @@ def bellman_ford(graph, start_id, end_id):
         "distance":        dist[end_id] if dist[end_id] != float('inf') else -1,
         "nodes_visited":   nodes_visited,
         "edges_explored":  edges_explored,
+        "explored_edges":  explored_edges,          # For frontend visualization
         "execution_time_ms": elapsed_ms,
         "complexity":      "O(V × E)",
         "space":           "O(V)",
@@ -367,6 +376,7 @@ def brute_force(graph, start_id, end_id, max_nodes=10):
     start_time = time.time()
     nodes_visited = [0]
     edges_explored = [0]
+    explored_edges = []  # Track (u, v) for every edge examined
     best_path = [None]
     best_dist = [float('inf')]
 
@@ -395,6 +405,7 @@ def brute_force(graph, start_id, end_id, max_nodes=10):
 
         for neighbour, weight in graph.get_neighbours(current):
             edges_explored[0] += 1
+            explored_edges.append((current, neighbour))  # Record this edge exploration
             if neighbour not in visited and neighbour in reachable:
                 visited.add(neighbour)
                 current_path.append(neighbour)
@@ -414,6 +425,7 @@ def brute_force(graph, start_id, end_id, max_nodes=10):
         "distance":        best_dist[0] if best_dist[0] != float('inf') else -1,
         "nodes_visited":   nodes_visited[0],
         "edges_explored":  edges_explored[0],
+        "explored_edges":  explored_edges,          # For frontend visualization
         "execution_time_ms": elapsed_ms,
         "complexity":      "O(n!) — factorial, infeasible for large graphs",
         "space":           "O(n) recursion stack",

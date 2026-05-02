@@ -72,13 +72,22 @@ class Graph:
 
     def heuristic(self, a_id, b_id):
         """
-        Euclidean distance between two nodes using lat/lon coordinates.
+        Haversine straight-line distance (in km) between two nodes.
 
-        WHY EUCLIDEAN?
-          - It is an admissible heuristic for A* — it never overestimates
-            the real distance (straight-line is always ≤ road distance).
-          - Simple to compute: sqrt( Δlat² + Δlon² )
-          - For small city areas, degrees ≈ km at this scale.
+        WHY HAVERSINE?
+          - Returns distance in KILOMETRES — the same unit as edge weights.
+            The old Euclidean-in-degrees heuristic returned ~0.01 for nodes
+            that are ~1 km apart, making it negligible and A* ≈ Dijkstra.
+          - Still ADMISSIBLE: straight-line distance never exceeds road
+            distance, so A* is guaranteed to find the optimal path.
+          - Haversine accounts for Earth's curvature, giving an accurate
+            great-circle distance even at city scale.
+
+        HOW IT WORKS:
+          Uses the Haversine formula:
+            a = sin²(Δlat/2) + cos(lat1) · cos(lat2) · sin²(Δlon/2)
+            c = 2 · atan2(√a, √(1−a))
+            d = R · c          where R = 6371 km (Earth's radius)
 
         TIME COMPLEXITY: O(1) — constant, just arithmetic.
         """
@@ -87,7 +96,21 @@ class Graph:
 
         lat1, lon1 = self.coords[a_id]
         lat2, lon2 = self.coords[b_id]
-        return math.sqrt((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2)
+
+        # Convert degrees to radians
+        lat1_r, lon1_r = math.radians(lat1), math.radians(lon1)
+        lat2_r, lon2_r = math.radians(lat2), math.radians(lon2)
+
+        dlat = lat2_r - lat1_r
+        dlon = lon2_r - lon1_r
+
+        # Haversine formula
+        a = math.sin(dlat / 2) ** 2 + \
+            math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+        R = 6371.0  # Earth's radius in km
+        return R * c
 
 
 # ─────────────────────────────────────────────────────────────

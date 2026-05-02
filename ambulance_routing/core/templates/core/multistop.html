@@ -1,415 +1,897 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Ambulance — Multi-Stop DP Routing</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#f5f3ea;--bg2:#fffdf7;--bg3:#ece7d9;--border:rgba(66,94,74,.18);--text:#1f2a22;--text2:#526357;--text3:#8a9a8f;--red:#c44536;--amber:#c58a2b;--green:#2f6f4f;--blue:#3f7a8c;--purple:#6e5a8a;}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;}
-.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0;}
-.logo{font-size:15px;font-weight:700;}.logo span{color:var(--red);}
-nav a{font-size:12px;color:var(--text2);text-decoration:none;padding:5px 10px;border-radius:5px;border:1px solid transparent;transition:.2s;}
-nav a:hover,nav a.active{border-color:var(--border);color:var(--text);background:var(--bg3);}
-nav{display:flex;gap:4px;margin-left:8px;}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
-.theme-select{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:5px 8px;font-size:11px;font-family:'JetBrains Mono',monospace;outline:none;}
-.layout{display:flex;flex:1;overflow:hidden;}
-.sidebar{width:310px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;}
-.sec{padding:14px 16px;border-bottom:1px solid var(--border);}
-.sec-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
-label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;}
-select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 10px;font-size:13px;font-family:'Space Grotesk',sans-serif;outline:none;}
-.btn{width:100%;padding:9px;border-radius:7px;border:none;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;margin-top:8px;}
-.btn-green{background:var(--green);color:#0b0f1a;}
-.btn-secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
-.btn:hover{opacity:.85;}
-.stops-list{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:130px;overflow-y:auto;}
-.stop-tag{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:5px 8px;font-size:12px;}
-.stop-tag-name{color:var(--text);}
-.stop-remove{color:var(--text3);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
-.stop-remove:hover{color:var(--red);}
-.hint{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;}
-.stat-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
-.stat-row:last-child{border:none;}
-.stat-key{color:var(--text2);}
-.stat-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;}
-.map-container{flex:1;position:relative;}
-#map{width:100%;height:100%;}
-.loading{font-size:11px;color:var(--amber);font-family:'JetBrains Mono',monospace;padding:6px 0;display:none;}
-.winner-box{background:rgba(38,222,129,.08);border:1px solid rgba(38,222,129,.2);border-radius:8px;padding:10px 12px;margin-top:8px;}
-.winner-title{font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px;}
-.winner-body{font-size:11px;color:var(--text2);line-height:1.6;}
-.route-step{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text2);padding:3px 0;}
-.route-arrow{color:var(--text3);}
-.algo-badge{font-size:9px;padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;}
-.badge-green{background:rgba(38,222,129,.15);color:var(--green);border:1px solid rgba(38,222,129,.3);}
-.badge-red{background:rgba(255,71,87,.12);color:var(--red);border:1px solid rgba(255,71,87,.3);}
-/* Map popup */
-.comparison-overlay{position:absolute;bottom:16px;right:16px;background:rgba(17,24,39,.95);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:12px;padding:14px 16px;width:280px;z-index:1000;font-family:'JetBrains Mono',monospace;display:none;}
-.ov-title{font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
-.ov-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px;}
-.ov-row:last-child{border:none;}
-.ov-key{color:var(--text2);}
-.ov-val{font-weight:500;}
-.route-legend{position:absolute;top:16px;right:16px;background:rgba(255,253,247,.92);border:1px solid var(--border);border-radius:10px;padding:9px 12px;z-index:1000;font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;}
-.leg-item-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
-.leg-item-row:last-child{margin-bottom:0;}
-.leg-line{width:22px;height:0;border-top:3px solid #fff;border-radius:2px;}
-.leg-line.path{border-color:var(--green);}
-.leg-line.probe{border-color:var(--blue);}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Ambulance — Multi-Stop DP Routing</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f3ea;
+      --bg2: #fffdf7;
+      --bg3: #ece7d9;
+      --border: rgba(66, 94, 74, .18);
+      --text: #1f2a22;
+      --text2: #526357;
+      --text3: #8a9a8f;
+      --red: #c44536;
+      --amber: #c58a2b;
+      --green: #2f6f4f;
+      --blue: #3f7a8c;
+      --purple: #6e5a8a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .topbar {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .logo span {
+      color: var(--red);
+    }
+
+    nav a {
+      font-size: 12px;
+      color: var(--text2);
+      text-decoration: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      border: 1px solid transparent;
+      transition: .2s;
+    }
+
+    nav a:hover,
+    nav a.active {
+      border-color: var(--border);
+      color: var(--text);
+      background: var(--bg3);
+    }
+
+    nav {
+      display: flex;
+      gap: 4px;
+      margin-left: 8px;
+    }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theme-select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 310px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .sec {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sec-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text2);
+      margin-bottom: 4px;
+    }
+
+    select {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 7px 10px;
+      font-size: 13px;
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 9px;
+      border-radius: 7px;
+      border: none;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .2s;
+      margin-top: 8px;
+    }
+
+    .btn-green {
+      background: var(--green);
+      color: #0b0f1a;
+    }
+
+    .btn-secondary {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+
+    .btn:hover {
+      opacity: .85;
+    }
+
+    .stops-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 6px;
+      max-height: 130px;
+      overflow-y: auto;
+    }
+
+    .stop-tag {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+
+    .stop-tag-name {
+      color: var(--text);
+    }
+
+    .stop-remove {
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 2px;
+    }
+
+    .stop-remove:hover {
+      color: var(--red);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+      font-size: 12px;
+    }
+
+    .stat-row:last-child {
+      border: none;
+    }
+
+    .stat-key {
+      color: var(--text2);
+    }
+
+    .stat-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .map-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .loading {
+      font-size: 11px;
+      color: var(--amber);
+      font-family: 'JetBrains Mono', monospace;
+      padding: 6px 0;
+      display: none;
+    }
+
+    .winner-box {
+      background: rgba(38, 222, 129, .08);
+      border: 1px solid rgba(38, 222, 129, .2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+
+    .winner-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 4px;
+    }
+
+    .winner-body {
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    .route-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text2);
+      padding: 3px 0;
+    }
+
+    .route-arrow {
+      color: var(--text3);
+    }
+
+    .algo-badge {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-green {
+      background: rgba(38, 222, 129, .15);
+      color: var(--green);
+      border: 1px solid rgba(38, 222, 129, .3);
+    }
+
+    .badge-red {
+      background: rgba(255, 71, 87, .12);
+      color: var(--red);
+      border: 1px solid rgba(255, 71, 87, .3);
+    }
+
+    /* Map popup */
+    .comparison-overlay {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(17, 24, 39, .95);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      width: 280px;
+      z-index: 1000;
+      font-family: 'JetBrains Mono', monospace;
+      display: none;
+    }
+
+    .ov-title {
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .ov-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .04);
+      font-size: 11px;
+    }
+
+    .ov-row:last-child {
+      border: none;
+    }
+
+    .ov-key {
+      color: var(--text2);
+    }
+
+    .ov-val {
+      font-weight: 500;
+    }
+
+    .route-legend {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 253, 247, .92);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 12px;
+      z-index: 1000;
+      font-size: 11px;
+      color: var(--text2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .leg-item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .leg-item-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .leg-line {
+      width: 22px;
+      height: 0;
+      border-top: 3px solid #fff;
+      border-radius: 2px;
+    }
+
+    .leg-line.path {
+      border-color: var(--green);
+    }
+
+    .leg-line.probe {
+      border-color: var(--blue);
+    }
+
+    @keyframes stopPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(47, 111, 79, 0.5);
+      }
+
+      50% {
+        box-shadow: 0 0 0 8px rgba(47, 111, 79, 0);
+      }
+    }
+
+    .stop-marker-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 2.5px solid #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      animation: stopPulse 2s infinite;
+    }
+
+    .preview-marker-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(63, 122, 140, 0.6);
+      border: 2px dashed var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #fff;
+    }
+  </style>
 </head>
+
 <body>
-<div class="topbar">
-  <div class="logo">🚑 <span>Smart</span>Ambulance</div>
-  <nav>
-    <a href="/">Simulation</a>
-    <a href="/compare/">Compare</a>
-    <a href="/traversal/">BFS/DFS</a>
-    <a href="/mst/">MST</a>
-    <a href="/sorting/">Sorting</a>
-    <a href="/search/">Search</a>
-    <a href="/multistop/" class="active">Multi-Stop</a>
-  </nav>
-  <div class="topbar-right">
-    <select id="mapThemeSelect" class="theme-select" onchange="setMapTheme(this.value)">
-      <option value="light" selected>Map: Light</option>
-      <option value="dark">Map: Dark</option>
-    </select>
-  </div>
-</div>
-<div class="layout">
-  <div class="sidebar">
-    <div class="sec">
-      <div class="sec-label">// Multi-Stop Route Optimizer</div>
-      <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px;">
-        Given multiple patient/hospital stops, find the <strong style="color:var(--text)">optimal visit sequence</strong>
-        that minimises total distance. Uses <strong style="color:var(--green)">Dynamic Programming</strong>
-        (Held-Karp, O(2ⁿ·n²)) vs <strong style="color:var(--red)">Brute Force</strong> (O(n!)).
-      </p>
-      <label>Add Stop Node</label>
-      <select id="stopSelect"></select>
-      <button class="btn btn-secondary" onclick="addStop()" style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);">+ Add Stop</button>
-      <div class="hint">Tip: click map to add nearest node as stop.</div>
-      <div style="margin-top:10px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">SELECTED STOPS (2–8)</div>
-        <div class="stops-list" id="stopsList">
-          <span style="font-size:11px;color:var(--text3)">Add at least 2 stops</span>
-        </div>
-      </div>
-      <button class="btn btn-green" onclick="runDP()" style="margin-top:10px;">🧠 Run DP Optimizer</button>
-      <button class="btn btn-secondary" onclick="clearAll()">✕ Clear All</button>
-      <div class="loading" id="loading">Running DP (Held-Karp) + Brute Force...</div>
-      <label style="margin-top:10px;">Animation Speed</label>
-      <select id="animSpeed">
-        <option value="900">Slow</option>
-        <option value="620" selected>Normal</option>
-        <option value="360">Fast</option>
+  <div class="topbar">
+    <div class="logo">🚑 <span>Smart</span>Ambulance</div>
+    <nav>
+      <a href="/">Simulation</a>
+      <a href="/compare/">Compare</a>
+      <a href="/traversal/">BFS/DFS</a>
+      <a href="/mst/">MST</a>
+      <!-- <a href="/sorting/">Sorting</a> -->
+      <!-- <a href="/search/">Search</a> -->
+      <a href="/multistop/" class="active">Multi-Stop</a>
+    </nav>
+    <div class="topbar-right">
+      <select id="mapThemeSelect" class="theme-select" onchange="setMapTheme(this.value)">
+        <option value="light" selected>Map: Light</option>
+        <option value="dark">Map: Dark</option>
       </select>
     </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sec">
+        <div class="sec-label">// Multi-Stop Route Optimizer</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px;">
+          Given multiple patient/hospital stops, find the <strong style="color:var(--text)">optimal visit
+            sequence</strong>
+          that minimises total distance. Uses <strong style="color:var(--green)">Dynamic Programming</strong>
+          (Held-Karp, O(2ⁿ·n²)) vs <strong style="color:var(--red)">Brute Force</strong> (O(n!)).
+        </p>
+        <label>Add Stop Node</label>
+        <select id="stopSelect"></select>
+        <button class="btn btn-secondary" onclick="addStop()"
+          style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);">+ Add Stop</button>
+        <div class="hint">Tip: click map to add nearest node as stop.</div>
+        <div style="margin-top:10px;">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-family:'JetBrains Mono',monospace;">
+            SELECTED STOPS (2–8)</div>
+          <div class="stops-list" id="stopsList">
+            <span style="font-size:11px;color:var(--text3)">Add at least 2 stops</span>
+          </div>
+        </div>
+        <button class="btn btn-green" onclick="runDP()" style="margin-top:10px;">🧠 Run DP Optimizer</button>
+        <button class="btn btn-secondary" onclick="clearAll()">✕ Clear All</button>
+        <div class="loading" id="loading">Running DP (Held-Karp) + Brute Force...</div>
+        <label style="margin-top:10px;">Animation Speed</label>
+        <select id="animSpeed">
+          <option value="900">Slow</option>
+          <option value="620" selected>Normal</option>
+          <option value="360">Fast</option>
+        </select>
+      </div>
 
-    <!-- DP Stats -->
-    <div class="sec">
-      <div class="sec-label">// DP Result <span class="algo-badge badge-green">O(2ⁿ·n²)</span></div>
-      <div class="stat-row"><span class="stat-key">Strategy</span><span class="stat-val" style="color:var(--green)">Held-Karp DP</span></div>
-      <div class="stat-row"><span class="stat-key">Total Distance</span><span class="stat-val" id="dp-dist">—</span></div>
-      <div class="stat-row"><span class="stat-key">States Explored</span><span class="stat-val" id="dp-states">—</span></div>
-      <div class="stat-row"><span class="stat-key">Time (ms)</span><span class="stat-val" id="dp-time">—</span></div>
-      <div class="stat-row"><span class="stat-key">Complexity</span><span class="stat-val" style="color:var(--green)">O(2ⁿ × n²)</span></div>
-      <div class="stat-row"><span class="stat-key">Space</span><span class="stat-val">O(2ⁿ × n)</span></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;font-family:'JetBrains Mono',monospace;">Optimal Route:</div>
-      <div id="dpRoute" style="margin-top:4px;"></div>
+      <!-- DP Stats -->
+      <div class="sec">
+        <div class="sec-label">// DP Result <span class="algo-badge badge-green">O(2ⁿ·n²)</span></div>
+        <div class="stat-row"><span class="stat-key">Strategy</span><span class="stat-val"
+            style="color:var(--green)">Held-Karp DP</span></div>
+        <div class="stat-row"><span class="stat-key">Total Distance</span><span class="stat-val" id="dp-dist">—</span>
+        </div>
+        <div class="stat-row"><span class="stat-key">States Explored</span><span class="stat-val"
+            id="dp-states">—</span></div>
+        <div class="stat-row"><span class="stat-key">Time (ms)</span><span class="stat-val" id="dp-time">—</span></div>
+        <div class="stat-row"><span class="stat-key">Complexity</span><span class="stat-val"
+            style="color:var(--green)">O(2ⁿ × n²)</span></div>
+        <div class="stat-row"><span class="stat-key">Space</span><span class="stat-val">O(2ⁿ × n)</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;font-family:'JetBrains Mono',monospace;">Optimal
+          Route:</div>
+        <div id="dpRoute" style="margin-top:4px;"></div>
+      </div>
+
+      <!-- Brute Force Stats -->
+      <div class="sec">
+        <div class="sec-label">// Brute Force <span class="algo-badge badge-red">O(n!)</span></div>
+        <div class="stat-row"><span class="stat-key">Strategy</span><span class="stat-val" style="color:var(--red)">Try
+            All Orderings</span></div>
+        <div class="stat-row"><span class="stat-key">Total Distance</span><span class="stat-val" id="bf-dist">—</span>
+        </div>
+        <div class="stat-row"><span class="stat-key">Orderings Tried</span><span class="stat-val"
+            id="bf-states">—</span></div>
+        <div class="stat-row"><span class="stat-key">Time (ms)</span><span class="stat-val" id="bf-time">—</span></div>
+        <div class="stat-row"><span class="stat-key">Complexity</span><span class="stat-val"
+            style="color:var(--red)">O(n!) — factorial</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:'JetBrains Mono',monospace;">Why DP
+          wins: for 10 stops, DP does 10,240 ops vs BF's 3,628,800 ops (354× fewer).</div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-label">// Why DP?</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.7;">
+          DP works because this problem has <strong style="color:var(--text)">optimal substructure</strong> and
+          <strong style="color:var(--text)">overlapping subproblems</strong> — the two DP properties.
+          The same subset of visited stops appears in many different orderings;
+          DP caches the result (memoisation) instead of recomputing it, reducing O(n!) to O(2ⁿ·n²).
+        </p>
+      </div>
     </div>
 
-    <!-- Brute Force Stats -->
-    <div class="sec">
-      <div class="sec-label">// Brute Force <span class="algo-badge badge-red">O(n!)</span></div>
-      <div class="stat-row"><span class="stat-key">Strategy</span><span class="stat-val" style="color:var(--red)">Try All Orderings</span></div>
-      <div class="stat-row"><span class="stat-key">Total Distance</span><span class="stat-val" id="bf-dist">—</span></div>
-      <div class="stat-row"><span class="stat-key">Orderings Tried</span><span class="stat-val" id="bf-states">—</span></div>
-      <div class="stat-row"><span class="stat-key">Time (ms)</span><span class="stat-val" id="bf-time">—</span></div>
-      <div class="stat-row"><span class="stat-key">Complexity</span><span class="stat-val" style="color:var(--red)">O(n!) — factorial</span></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:6px;font-family:'JetBrains Mono',monospace;">Why DP wins: for 10 stops, DP does 10,240 ops vs BF's 3,628,800 ops (354× fewer).</div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-label">// Why DP?</div>
-      <p style="font-size:12px;color:var(--text2);line-height:1.7;">
-        DP works because this problem has <strong style="color:var(--text)">optimal substructure</strong> and
-        <strong style="color:var(--text)">overlapping subproblems</strong> — the two DP properties.
-        The same subset of visited stops appears in many different orderings;
-        DP caches the result (memoisation) instead of recomputing it, reducing O(n!) to O(2ⁿ·n²).
-      </p>
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="route-legend">
+        <div class="leg-item-row"><span class="leg-line path"></span><span>Optimized route</span></div>
+        <div class="leg-item-row"><span class="leg-line probe"></span><span>Animated ambulance</span></div>
+      </div>
+      <div class="comparison-overlay" id="compOverlay">
+        <div class="ov-title">DP vs Brute Force</div>
+        <div class="ov-row"><span class="ov-key">DP Distance</span><span class="ov-val" style="color:var(--green)"
+            id="ov-dp">—</span></div>
+        <div class="ov-row"><span class="ov-key">BF Distance</span><span class="ov-val" style="color:var(--red)"
+            id="ov-bf">—</span></div>
+        <div class="ov-row"><span class="ov-key">DP Time</span><span class="ov-val" id="ov-dp-t">—</span></div>
+        <div class="ov-row"><span class="ov-key">BF Time</span><span class="ov-val" id="ov-bf-t">—</span></div>
+        <div class="ov-row"><span class="ov-key">n! ops (BF)</span><span class="ov-val" id="ov-nfact"
+            style="color:var(--red)">—</span></div>
+        <div class="ov-row"><span class="ov-key">2ⁿ·n² ops (DP)</span><span class="ov-val" id="ov-dpops"
+            style="color:var(--green)">—</span></div>
+      </div>
     </div>
   </div>
 
-  <div class="map-container">
-    <div id="map"></div>
-    <div class="route-legend">
-      <div class="leg-item-row"><span class="leg-line path"></span><span>Optimized route</span></div>
-      <div class="leg-item-row"><span class="leg-line probe"></span><span>Animated ambulance</span></div>
-    </div>
-    <div class="comparison-overlay" id="compOverlay">
-      <div class="ov-title">DP vs Brute Force</div>
-      <div class="ov-row"><span class="ov-key">DP Distance</span><span class="ov-val" style="color:var(--green)" id="ov-dp">—</span></div>
-      <div class="ov-row"><span class="ov-key">BF Distance</span><span class="ov-val" style="color:var(--red)" id="ov-bf">—</span></div>
-      <div class="ov-row"><span class="ov-key">DP Time</span><span class="ov-val" id="ov-dp-t">—</span></div>
-      <div class="ov-row"><span class="ov-key">BF Time</span><span class="ov-val" id="ov-bf-t">—</span></div>
-      <div class="ov-row"><span class="ov-key">n! ops (BF)</span><span class="ov-val" id="ov-nfact" style="color:var(--red)">—</span></div>
-      <div class="ov-row"><span class="ov-key">2ⁿ·n² ops (DP)</span><span class="ov-val" id="ov-dpops" style="color:var(--green)">—</span></div>
-    </div>
-  </div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-const API = 'http://127.0.0.1:8000';
-const map = L.map('map', {preferCanvas:true}).setView([31.5204, 74.3587], 13);
-let tileLayer = null;
-const MAP_TILES = {
-  light: {url:'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', options:{attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:20}},
-  dark: {url:'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', options:{attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:20}}
-};
-function setMapTheme(theme='light'){
-  const cfg = MAP_TILES[theme] || MAP_TILES.light;
-  if (tileLayer) map.removeLayer(tileLayer);
-  tileLayer = L.tileLayer(cfg.url, cfg.options).addTo(map);
-}
-setMapTheme('light');
-
-let selectedStops = []; // {id, label}
-let allNodes = [];
-let graphData = null;
-let dpLayer = null, bfLayer = null, markerLayers = [];
-let baseEdgeLayer = null;
-let routeRunner = null;
-let animFrame = null;
-
-async function loadGraph() {
-  try {
-    const r = await fetch(`${API}/api/graph/`);
-    graphData = await r.json();
-    allNodes = graphData.nodes || [];
-
-    // Draw faint base edges
-    const lines = (graphData.edges || []).map(e => [[e.source_lat, e.source_lon],[e.dest_lat, e.dest_lon]]);
-    baseEdgeLayer = L.polyline(lines, {color:'#94a3b8', opacity:.18, weight:1.2, smoothFactor:1}).addTo(map);
-
-    // Populate dropdown
-    const sel = document.getElementById('stopSelect');
-    sel.innerHTML = allNodes.map(n => `<option value="${n.id}">${n.label}</option>`).join('');
-
-    // Fit map
-    if (allNodes.length > 0) {
-      const lats = allNodes.map(n => n.latitude);
-      const lons = allNodes.map(n => n.longitude);
-      map.fitBounds([[Math.min(...lats), Math.min(...lons)], [Math.max(...lats), Math.max(...lons)]], {padding:[30,30]});
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const API = 'http://127.0.0.1:8000';
+    const map = L.map('map', { preferCanvas: true }).setView([31.5204, 74.3587], 13);
+    let tileLayer = null;
+    const MAP_TILES = {
+      light: { url: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', options: { attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 20 } },
+      dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', options: { attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 20 } }
+    };
+    function setMapTheme(theme = 'light') {
+      const cfg = MAP_TILES[theme] || MAP_TILES.light;
+      if (tileLayer) map.removeLayer(tileLayer);
+      tileLayer = L.tileLayer(cfg.url, cfg.options).addTo(map);
     }
-  } catch(e) { console.error('Graph load failed:', e); }
-}
+    setMapTheme('light');
 
-function addStop() {
-  const sel = document.getElementById('stopSelect');
-  const id = parseInt(sel.value);
-  const label = sel.options[sel.selectedIndex]?.text || `Node ${id}`;
-  if (selectedStops.find(s => s.id === id)) return; // no duplicates
-  if (selectedStops.length >= 8) { alert('Maximum 8 stops'); return; }
-  selectedStops.push({id, label});
-  renderStopsList();
-}
+    let selectedStops = []; // {id, label}
+    let allNodes = [];
+    let graphData = null;
+    let dpLayer = null, bfLayer = null, markerLayers = [];
+    let baseEdgeLayer = null;
+    let routeRunner = null;
+    let animFrame = null;
+    let stopMarkers = {};   // { nodeId: L.marker } — numbered markers for selected stops
+    let previewMarker = null; // Temporary marker shown on dropdown hover/change
 
-function removeStop(id) {
-  selectedStops = selectedStops.filter(s => s.id !== id);
-  renderStopsList();
-}
+    async function loadGraph() {
+      try {
+        const r = await fetch(`${API}/api/graph/`);
+        graphData = await r.json();
+        allNodes = graphData.nodes || [];
 
-function renderStopsList() {
-  const el = document.getElementById('stopsList');
-  if (!selectedStops.length) {
-    el.innerHTML = '<span style="font-size:11px;color:var(--text3)">Add at least 2 stops</span>';
-    return;
-  }
-  el.innerHTML = selectedStops.map((s, i) => `
+        // Draw faint base edges
+        const lines = (graphData.edges || []).map(e => [[e.source_lat, e.source_lon], [e.dest_lat, e.dest_lon]]);
+        baseEdgeLayer = L.polyline(lines, { color: '#94a3b8', opacity: 0.2, weight: 3.5, smoothFactor: 1 }).addTo(map);
+
+        // Draw small node markers so all nodes are visible on the map
+        allNodes.forEach(n => {
+          L.circleMarker([n.latitude, n.longitude], {
+            radius: 3, color: '#94a3b8', fillColor: '#94a3b8',
+            fillOpacity: 0.4, weight: 0.8
+          }).addTo(map);
+        });
+
+        // Populate dropdown
+        const sel = document.getElementById('stopSelect');
+        sel.innerHTML = allNodes.map(n => `<option value="${n.id}">${n.label}</option>`).join('');
+
+        // Fit map
+        if (allNodes.length > 0) {
+          const lats = allNodes.map(n => n.latitude);
+          const lons = allNodes.map(n => n.longitude);
+          map.fitBounds([[Math.min(...lats), Math.min(...lons)], [Math.max(...lats), Math.max(...lons)]], { padding: [30, 30] });
+        }
+      } catch (e) { console.error('Graph load failed:', e); }
+    }
+
+    function addStop() {
+      const sel = document.getElementById('stopSelect');
+      const id = parseInt(sel.value);
+      const label = sel.options[sel.selectedIndex]?.text || `Node ${id}`;
+      if (selectedStops.find(s => s.id === id)) return; // no duplicates
+      if (selectedStops.length >= 8) { alert('Maximum 8 stops'); return; }
+      selectedStops.push({ id, label });
+      renderStopsList();
+      placeStopMarker(id, label, selectedStops.length);
+      clearPreviewMarker();
+    }
+
+    function removeStop(id) {
+      selectedStops = selectedStops.filter(s => s.id !== id);
+      // Remove the marker from the map
+      if (stopMarkers[id]) {
+        map.removeLayer(stopMarkers[id]);
+        delete stopMarkers[id];
+      }
+      // Re-number remaining markers
+      refreshAllStopMarkers();
+      renderStopsList();
+    }
+
+    function renderStopsList() {
+      const el = document.getElementById('stopsList');
+      if (!selectedStops.length) {
+        el.innerHTML = '<span style="font-size:11px;color:var(--text3)">Add at least 2 stops</span>';
+        return;
+      }
+      el.innerHTML = selectedStops.map((s, i) => `
     <div class="stop-tag">
-      <span class="stop-tag-name">${i+1}. ${s.label}</span>
+      <span class="stop-tag-name">${i + 1}. ${s.label}</span>
       <span class="stop-remove" onclick="removeStop(${s.id})">✕</span>
     </div>
   `).join('');
-}
-
-function nearestNode(lat, lon) {
-  let best = null;
-  let bestDist = Infinity;
-  allNodes.forEach(n => {
-    const d = Math.hypot(n.latitude - lat, n.longitude - lon);
-    if (d < bestDist) {
-      bestDist = d;
-      best = n;
     }
-  });
-  return best;
-}
 
-async function runDP() {
-  if (selectedStops.length < 2) { alert('Add at least 2 stops'); return; }
-  document.getElementById('loading').style.display = 'block';
-  clearRoutes();
-  try {
-    const r = await fetch(`${API}/api/multistop/`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({stops: selectedStops.map(s => s.id)})
-    });
-    const data = await r.json();
-    document.getElementById('loading').style.display = 'none';
-    if (data.error) { alert(data.error); return; }
-    renderResults(data);
-  } catch(e) {
-    document.getElementById('loading').style.display = 'none';
-    console.error(e);
-    alert('API call failed. Make sure Django is running on 127.0.0.1:8000');
-  }
-}
-
-function renderResults(data) {
-  const dp = data.dp;
-  const bf = data.brute_force;
-  const n = selectedStops.length;
-
-  // DP stats
-  document.getElementById('dp-dist').textContent = dp.total_distance != null ? dp.total_distance.toFixed(2) + ' km' : '—';
-  document.getElementById('dp-states').textContent = dp.states_explored ?? '—';
-  document.getElementById('dp-time').textContent = dp.execution_time_ms != null ? dp.execution_time_ms + ' ms' : '—';
-
-  // BF stats
-  document.getElementById('bf-dist').textContent = bf.total_distance != null ? bf.total_distance.toFixed(2) + ' km' : '—';
-  document.getElementById('bf-states').textContent = bf.permutations_tried ?? '—';
-  document.getElementById('bf-time').textContent = bf.execution_time_ms != null ? bf.execution_time_ms + ' ms' : '—';
-
-  // DP route
-  const dpCoords = dp.path_coords || [];
-  document.getElementById('dpRoute').innerHTML = dpCoords.map((c, i) =>
-    i < dpCoords.length - 1
-      ? `<div class="route-step"><span style="color:var(--green)">${c.label}</span><span class="route-arrow">→</span></div>`
-      : `<div class="route-step"><span style="color:var(--green)">${c.label}</span></div>`
-  ).join('');
-
-  // Draw routes on map
-  clearMarkers();
-  dpCoords.forEach((c, i) => {
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="width:26px;height:26px;border-radius:50%;background:${i===0?'var(--green)':'var(--bg3)'};border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${i===0?'#0b0f1a':'var(--green)'};">${i+1}</div>`,
-      iconSize:[26,26], iconAnchor:[13,13]
-    });
-    const m = L.marker([c.lat, c.lon], {icon}).addTo(map);
-    m.bindTooltip(`Stop ${i+1}: ${c.label}`, {permanent:false});
-    markerLayers.push(m);
-  });
-
-  if (dpCoords.length >= 2) {
-    const latlngs = dpCoords.map(c => [c.lat, c.lon]);
-    dpLayer = L.polyline(latlngs, {color:'var(--green)', weight:4, opacity:.9, dashArray:null}).addTo(map);
-    map.fitBounds(dpLayer.getBounds(), {padding:[40,40]});
-    animateRoute(latlngs);
-  }
-
-  // Overlay stats
-  const nFact = factorial(n);
-  const dpOps = Math.pow(2, n) * n * n;
-  document.getElementById('ov-dp').textContent = dp.total_distance?.toFixed(2) + ' km' || '—';
-  document.getElementById('ov-bf').textContent = bf.total_distance?.toFixed(2) + ' km' || '—';
-  document.getElementById('ov-dp-t').textContent = (dp.execution_time_ms ?? '—') + ' ms';
-  document.getElementById('ov-bf-t').textContent = (bf.execution_time_ms ?? '—') + ' ms';
-  document.getElementById('ov-nfact').textContent = nFact.toLocaleString();
-  document.getElementById('ov-dpops').textContent = Math.round(dpOps).toLocaleString();
-  document.getElementById('compOverlay').style.display = 'block';
-}
-
-function animateRoute(latlngs) {
-  if (!latlngs || latlngs.length < 2) return;
-  if (routeRunner) map.removeLayer(routeRunner);
-  if (animFrame) cancelAnimationFrame(animFrame);
-
-  routeRunner = L.circleMarker(latlngs[0], {
-    radius: 7,
-    color: '#fffdf7',
-    weight: 2,
-    fillColor: '#3f7a8c',
-    fillOpacity: 1,
-    pane: 'markerPane',
-  }).addTo(map);
-
-  const durationPerSegment = parseInt(document.getElementById('animSpeed').value || '620', 10);
-  let segmentIndex = 0;
-  let segmentStart = performance.now();
-
-  function frame(now) {
-    const from = latlngs[segmentIndex];
-    const to = latlngs[segmentIndex + 1];
-    if (!from || !to) return;
-
-    const t = Math.min(1, (now - segmentStart) / durationPerSegment);
-    const lat = from[0] + (to[0] - from[0]) * t;
-    const lon = from[1] + (to[1] - from[1]) * t;
-    routeRunner.setLatLng([lat, lon]);
-
-    if (t >= 1) {
-      segmentIndex += 1;
-      segmentStart = now;
-      if (segmentIndex >= latlngs.length - 1) return;
+    function nearestNode(lat, lon) {
+      let best = null;
+      let bestDist = Infinity;
+      allNodes.forEach(n => {
+        const d = Math.hypot(n.latitude - lat, n.longitude - lon);
+        if (d < bestDist) {
+          bestDist = d;
+          best = n;
+        }
+      });
+      return best;
     }
-    animFrame = requestAnimationFrame(frame);
-  }
 
-  animFrame = requestAnimationFrame(frame);
-}
+    // ── Stop marker management ──────────────────────────────────
+    function placeStopMarker(nodeId, label, number) {
+      const node = allNodes.find(n => n.id === nodeId);
+      if (!node) return;
+      // Remove existing marker for this node if any
+      if (stopMarkers[nodeId]) map.removeLayer(stopMarkers[nodeId]);
+      const icon = L.divIcon({
+        className: '',
+        html: `<div class="stop-marker-icon">${number}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+      const marker = L.marker([node.latitude, node.longitude], { icon, zIndexOffset: 1000 })
+        .bindTooltip(`Stop ${number}: ${label}`, { permanent: false })
+        .addTo(map);
+      stopMarkers[nodeId] = marker;
+    }
 
-function factorial(n) {
-  let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
-}
+    function refreshAllStopMarkers() {
+      // Clear all stop markers and re-place them with correct numbering
+      Object.values(stopMarkers).forEach(m => map.removeLayer(m));
+      stopMarkers = {};
+      selectedStops.forEach((s, i) => placeStopMarker(s.id, s.label, i + 1));
+    }
 
-function clearMarkers() {
-  markerLayers.forEach(m => map.removeLayer(m));
-  markerLayers = [];
-}
+    function clearAllStopMarkers() {
+      Object.values(stopMarkers).forEach(m => map.removeLayer(m));
+      stopMarkers = {};
+      clearPreviewMarker();
+    }
 
-function clearRoutes() {
-  if (dpLayer) { map.removeLayer(dpLayer); dpLayer = null; }
-  if (bfLayer) { map.removeLayer(bfLayer); bfLayer = null; }
-  if (routeRunner) { map.removeLayer(routeRunner); routeRunner = null; }
-  if (animFrame) cancelAnimationFrame(animFrame);
-  clearMarkers();
-}
+    function clearPreviewMarker() {
+      if (previewMarker) { map.removeLayer(previewMarker); previewMarker = null; }
+    }
 
-function clearAll() {
-  clearRoutes();
-  selectedStops = [];
-  renderStopsList();
-  ['dp-dist','dp-states','dp-time','bf-dist','bf-states','bf-time']
-    .forEach(id => document.getElementById(id).textContent = '—');
-  document.getElementById('dpRoute').innerHTML = '';
-  document.getElementById('compOverlay').style.display = 'none';
-}
+    // Show preview when dropdown selection changes
+    document.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('stopSelect');
+      if (sel) {
+        sel.addEventListener('change', () => {
+          clearPreviewMarker();
+          const id = parseInt(sel.value);
+          if (isNaN(id)) return;
+          if (selectedStops.find(s => s.id === id)) return; // already added
+          const node = allNodes.find(n => n.id === id);
+          if (!node) return;
+          const icon = L.divIcon({
+            className: '',
+            html: `<div class="preview-marker-icon">?</div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+          });
+          previewMarker = L.marker([node.latitude, node.longitude], { icon, zIndexOffset: 900 })
+            .bindTooltip(`Preview: ${node.label}`, { permanent: false })
+            .addTo(map);
+          map.panTo([node.latitude, node.longitude], { animate: true });
+        });
+      }
+    });
 
-map.on('click', (e) => {
-  if (!allNodes.length) return;
-  const best = nearestNode(e.latlng.lat, e.latlng.lng);
-  if (!best) return;
-  if (selectedStops.find(s => s.id === best.id)) return;
-  if (selectedStops.length >= 8) {
-    alert('Maximum 8 stops');
-    return;
-  }
-  selectedStops.push({id: best.id, label: `${best.label} (ID ${best.id})`});
-  renderStopsList();
-});
+    async function runDP() {
+      if (selectedStops.length < 2) { alert('Add at least 2 stops'); return; }
+      document.getElementById('loading').style.display = 'block';
+      clearRoutes();
+      try {
+        const r = await fetch(`${API}/api/multistop/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stops: selectedStops.map(s => s.id) })
+        });
+        const data = await r.json();
+        document.getElementById('loading').style.display = 'none';
+        if (data.error) { alert(data.error); return; }
+        renderResults(data);
+      } catch (e) {
+        document.getElementById('loading').style.display = 'none';
+        console.error(e);
+        alert('API call failed. Make sure Django is running on 127.0.0.1:8000');
+      }
+    }
 
-loadGraph();
-</script>
+    function renderResults(data) {
+      const dp = data.dp;
+      const bf = data.brute_force;
+      const n = selectedStops.length;
+
+      // DP stats
+      document.getElementById('dp-dist').textContent = dp.total_distance != null ? dp.total_distance.toFixed(2) + ' km' : '—';
+      document.getElementById('dp-states').textContent = dp.states_explored ?? '—';
+      document.getElementById('dp-time').textContent = dp.execution_time_ms != null ? dp.execution_time_ms + ' ms' : '—';
+
+      // BF stats
+      document.getElementById('bf-dist').textContent = bf.total_distance != null ? bf.total_distance.toFixed(2) + ' km' : '—';
+      document.getElementById('bf-states').textContent = bf.permutations_tried ?? '—';
+      document.getElementById('bf-time').textContent = bf.execution_time_ms != null ? bf.execution_time_ms + ' ms' : '—';
+
+      // DP route
+      const dpCoords = dp.path_coords || [];
+      document.getElementById('dpRoute').innerHTML = dpCoords.map((c, i) =>
+        i < dpCoords.length - 1
+          ? `<div class="route-step"><span style="color:var(--green)">${c.label}</span><span class="route-arrow">→</span></div>`
+          : `<div class="route-step"><span style="color:var(--green)">${c.label}</span></div>`
+      ).join('');
+
+      // Draw routes on map
+      clearMarkers();
+      dpCoords.forEach((c, i) => {
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="width:26px;height:26px;border-radius:50%;background:${i === 0 ? 'var(--green)' : 'var(--bg3)'};border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${i === 0 ? '#0b0f1a' : 'var(--green)'};">${i + 1}</div>`,
+          iconSize: [26, 26], iconAnchor: [13, 13]
+        });
+        const m = L.marker([c.lat, c.lon], { icon }).addTo(map);
+        m.bindTooltip(`Stop ${i + 1}: ${c.label}`, { permanent: false });
+        markerLayers.push(m);
+      });
+
+      // Use detailed_path_coords (follows actual graph edges) for polyline
+      const detailedCoords = dp.detailed_path_coords || dpCoords;
+      if (detailedCoords.length >= 2) {
+        const latlngs = detailedCoords.map(c => [c.lat, c.lon]);
+        dpLayer = L.polyline(latlngs, { color: 'var(--green)', weight: 4, opacity: .9, dashArray: null }).addTo(map);
+        map.fitBounds(dpLayer.getBounds(), { padding: [40, 40] });
+        animateRoute(latlngs);
+      }
+
+      // Overlay stats
+      const nFact = factorial(n);
+      const dpOps = Math.pow(2, n) * n * n;
+      document.getElementById('ov-dp').textContent = dp.total_distance?.toFixed(2) + ' km' || '—';
+      document.getElementById('ov-bf').textContent = bf.total_distance?.toFixed(2) + ' km' || '—';
+      document.getElementById('ov-dp-t').textContent = (dp.execution_time_ms ?? '—') + ' ms';
+      document.getElementById('ov-bf-t').textContent = (bf.execution_time_ms ?? '—') + ' ms';
+      document.getElementById('ov-nfact').textContent = nFact.toLocaleString();
+      document.getElementById('ov-dpops').textContent = Math.round(dpOps).toLocaleString();
+      document.getElementById('compOverlay').style.display = 'block';
+    }
+
+    function animateRoute(latlngs) {
+      if (!latlngs || latlngs.length < 2) return;
+      if (routeRunner) map.removeLayer(routeRunner);
+      if (animFrame) cancelAnimationFrame(animFrame);
+
+      routeRunner = L.circleMarker(latlngs[0], {
+        radius: 7,
+        color: '#fffdf7',
+        weight: 2,
+        fillColor: '#3f7a8c',
+        fillOpacity: 1,
+        pane: 'markerPane',
+      }).addTo(map);
+
+      const durationPerSegment = parseInt(document.getElementById('animSpeed').value || '620', 10);
+      let segmentIndex = 0;
+      let segmentStart = performance.now();
+
+      function frame(now) {
+        const from = latlngs[segmentIndex];
+        const to = latlngs[segmentIndex + 1];
+        if (!from || !to) return;
+
+        const t = Math.min(1, (now - segmentStart) / durationPerSegment);
+        const lat = from[0] + (to[0] - from[0]) * t;
+        const lon = from[1] + (to[1] - from[1]) * t;
+        routeRunner.setLatLng([lat, lon]);
+
+        if (t >= 1) {
+          segmentIndex += 1;
+          segmentStart = now;
+          if (segmentIndex >= latlngs.length - 1) return;
+        }
+        animFrame = requestAnimationFrame(frame);
+      }
+
+      animFrame = requestAnimationFrame(frame);
+    }
+
+    function factorial(n) {
+      let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+    }
+
+    function clearMarkers() {
+      markerLayers.forEach(m => map.removeLayer(m));
+      markerLayers = [];
+    }
+
+    function clearRoutes() {
+      if (dpLayer) { map.removeLayer(dpLayer); dpLayer = null; }
+      if (bfLayer) { map.removeLayer(bfLayer); bfLayer = null; }
+      if (routeRunner) { map.removeLayer(routeRunner); routeRunner = null; }
+      if (animFrame) cancelAnimationFrame(animFrame);
+      clearMarkers();
+    }
+
+    function clearAll() {
+      clearRoutes();
+      clearAllStopMarkers();
+      selectedStops = [];
+      renderStopsList();
+      ['dp-dist', 'dp-states', 'dp-time', 'bf-dist', 'bf-states', 'bf-time']
+        .forEach(id => document.getElementById(id).textContent = '—');
+      document.getElementById('dpRoute').innerHTML = '';
+      document.getElementById('compOverlay').style.display = 'none';
+    }
+
+    map.on('click', (e) => {
+      if (!allNodes.length) return;
+      const best = nearestNode(e.latlng.lat, e.latlng.lng);
+      if (!best) return;
+      if (selectedStops.find(s => s.id === best.id)) return;
+      if (selectedStops.length >= 8) {
+        alert('Maximum 8 stops');
+        return;
+      }
+      const label = `${best.label} (ID ${best.id})`;
+      selectedStops.push({ id: best.id, label });
+      renderStopsList();
+      placeStopMarker(best.id, label, selectedStops.length);
+      clearPreviewMarker();
+    });
+
+    loadGraph();
+  </script>
 </body>
+
 </html>

@@ -37,8 +37,6 @@ urlpatterns = [
     path('compare/',     views.page_compare,    name='compare'),
     path('traversal/',   views.page_traversal,  name='traversal'),
     path('mst/',         views.page_mst,        name='mst'),
-    path('sorting/',     views.page_sorting,    name='sorting'),
-    path('search/',      views.page_search,     name='search'),
     path('multistop/',   views.page_multistop,  name='multistop'),
 
     # ── API endpoints (return JSON) ────────────────────────────
@@ -51,8 +49,8 @@ urlpatterns = [
     path('api/bfs/',       views.run_bfs,               name='api-bfs'),
     path('api/dfs/',       views.run_dfs,               name='api-dfs'),
     path('api/mst/',       views.run_mst,               name='api-mst'),
-    path('api/sort/',      views.sort_hospitals_view,   name='api-sort'),
-    path('api/search/',    views.search_hospital_names, name='api-search'),
+    # path('api/sort/',      views.sort_hospitals_view,   name='api-sort'),
+    # path('api/search/',    views.search_hospital_names, name='api-search'),
     path('api/multistop/', views.multistop_route,       name='api-multistop'),
     path('api/traffic/',   views.update_traffic,        name='api-traffic'),
 ]

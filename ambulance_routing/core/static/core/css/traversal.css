@@ -1,0 +1,78 @@
+/* =====================================================
+   traversal.css  –  BFS / DFS page
+   ===================================================== */
+
+html, body {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar {
+  width: 280px;
+}
+
+/* Order list */
+.order-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 8px;
+  border: 1px solid var(--border-light);
+  border-radius: 4px;
+  padding: 4px 0;
+}
+
+.order-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-idx {
+  color: var(--text3);
+  width: 26px;
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+/* Difference box */
+.diff-box {
+  background: var(--amber-light);
+  border: 1px solid #f0d9a8;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.7;
+  margin-top: 8px;
+}
+
+.diff-box strong {
+  color: var(--amber);
+}
+
+/* Map theme select */
+.topbar-right {
+  margin-left: auto;
+}
+
+.theme-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  outline: none;
+  width: auto;
+}

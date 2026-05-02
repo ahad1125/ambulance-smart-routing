@@ -1,0 +1,270 @@
+/* =====================================================
+   base.css  –  Shared styles for all pages
+   Smart Ambulance Routing System
+   ===================================================== */
+
+:root {
+  --primary: #1a56a0;
+  --primary-dark: #144080;
+  --primary-light: #e8f0fb;
+  --red: #c0392b;
+  --red-light: #fdf0ef;
+  --green: #1e7e34;
+  --green-light: #eaf6ec;
+  --amber: #b7760d;
+  --amber-light: #fdf8ee;
+  --purple: #6a3d9a;
+  --purple-light: #f3eefa;
+
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --border: #d0d5dd;
+  --border-light: #e8eaed;
+  --text: #1a1a2e;
+  --text2: #4a5568;
+  --text3: #718096;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Top Navigation Bar ─────────────────────────── */
+.topbar {
+  background: var(--surface);
+  border-bottom: 2px solid var(--primary);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.logo {
+  font-size: 16px;
+  font-weight: bold;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.logo span {
+  color: var(--primary);
+}
+
+nav {
+  display: flex;
+  gap: 2px;
+  margin-left: 12px;
+}
+
+nav a {
+  font-size: 13px;
+  color: var(--text2);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border-bottom: 2px solid transparent;
+}
+
+nav a:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+nav a.active {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+  font-weight: bold;
+}
+
+/* ── Layout ─────────────────────────────────────── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────────────── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sidebar-section {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.sec-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+/* ── Forms ───────────────────────────────────────── */
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+select,
+input[type="text"],
+input[type="number"] {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: Arial, Helvetica, sans-serif;
+  outline: none;
+}
+
+select:focus,
+input:focus {
+  border-color: var(--primary);
+  outline: 2px solid rgba(26, 86, 160, 0.2);
+}
+
+/* ── Buttons ─────────────────────────────────────── */
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn:hover {
+  opacity: 0.88;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text2);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--bg);
+}
+
+.btn-danger {
+  background: var(--red);
+  color: #ffffff;
+}
+
+.btn-success {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.btn-block {
+  width: 100%;
+  display: block;
+  margin-top: 8px;
+}
+
+/* ── Stat Rows ───────────────────────────────────── */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12px;
+}
+
+.stat-row:last-child {
+  border-bottom: none;
+}
+
+.stat-key {
+  color: var(--text2);
+}
+
+.stat-val {
+  font-weight: bold;
+  color: var(--text);
+}
+
+.stat-val.green { color: var(--green); }
+.stat-val.blue  { color: var(--primary); }
+.stat-val.amber { color: var(--amber); }
+.stat-val.red   { color: var(--red); }
+
+/* ── Map Container ───────────────────────────────── */
+.map-container {
+  flex: 1;
+  position: relative;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Info Box ────────────────────────────────────── */
+.info-box {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  padding: 10px 12px;
+  background: var(--primary-light);
+  border-radius: 4px;
+  border-left: 3px solid var(--primary);
+}
+
+/* ── Loading indicator ───────────────────────────── */
+.loading-text {
+  font-size: 12px;
+  color: var(--amber);
+  display: none;
+  margin-top: 6px;
+}
+
+/* ── Badge / Tag ─────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.badge-green  { background: var(--green-light);  color: var(--green);  border: 1px solid #a8ddb5; }
+.badge-red    { background: var(--red-light);    color: var(--red);    border: 1px solid #f5c6c2; }
+.badge-blue   { background: var(--primary-light); color: var(--primary); border: 1px solid #b3c9ec; }
+.badge-amber  { background: var(--amber-light);  color: var(--amber);  border: 1px solid #f0d9a8; }
+.badge-purple { background: var(--purple-light); color: var(--purple); border: 1px solid #c9b3e0; }
