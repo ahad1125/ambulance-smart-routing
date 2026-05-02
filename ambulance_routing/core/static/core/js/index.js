@@ -216,10 +216,12 @@ function animateExploration(exploredEdges, delayMs = 35) {
 async function runManualRoute(sourceNode, algo) {
   const dest = document.getElementById('destSelect').value;
   if (!dest) { alert('Select a destination hospital in manual mode'); return; }
+  
+  const useTraffic = document.getElementById('useTraffic').checked;
   const res = await fetch(`${API}/api/route/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source: sourceNode, destination: parseInt(dest), algorithm: algo })
+    body: JSON.stringify({ source: sourceNode, destination: parseInt(dest), algorithm: algo, use_traffic: useTraffic })
   });
   const data = await res.json();
   if (data.error) { alert('Error: ' + data.error); return; }
@@ -237,10 +239,11 @@ async function runManualRoute(sourceNode, algo) {
 }
 
 async function runAutoDispatch(sourceNode, algo) {
+  const useTraffic = document.getElementById('useTraffic').checked;
   const res = await fetch(`${API}/api/dispatch/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ source: sourceNode, algorithm: algo })
+    body: JSON.stringify({ source: sourceNode, algorithm: algo, use_traffic: useTraffic })
   });
   const data = await res.json();
   if (data.error) { alert('Error: ' + data.error); return; }

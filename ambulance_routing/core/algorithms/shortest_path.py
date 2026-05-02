@@ -26,6 +26,7 @@ CLO COVERAGE:
 
 import heapq  # Python's built-in min-heap (priority queue)
 import time
+from collections import deque
 
 
 # ─────────────────────────────────────────────────────────────
@@ -254,34 +255,23 @@ def astar(graph, start_id, end_id):
 
 def bellman_ford(graph, start_id, end_id):
     """
-    Finds the shortest path using Bellman-Ford.
+    Finds the shortest path using the Shortest Path Faster Algorithm (SPFA),
+    which is a highly optimized queue-based version of Bellman-Ford.
 
     HOW IT WORKS:
-      Unlike Dijkstra, Bellman-Ford doesn't use a priority queue.
-      Instead, it relaxes ALL edges V-1 times.
-
-      WHY V-1 TIMES?
-        In a graph with V nodes, any shortest path visits at most V-1 edges.
-        After k relaxations, we know the shortest path using at most k edges.
-        After V-1 relaxations, we've found all shortest paths.
+      Standard Bellman-Ford blindly relaxes all edges V-1 times.
+      SPFA improves this by using a queue. If a node's distance wasn't
+      updated, there's no need to check its neighbours. We only queue
+      nodes whose distances have improved.
 
       NEGATIVE CYCLE DETECTION:
-        After V-1 passes, if we can STILL relax an edge, there's a negative cycle
-        (a loop where you can keep getting shorter distances forever).
-        We raise a ValueError in that case.
+        If a node is added to the queue V times, it means we are endlessly
+        finding shorter paths, which implies a negative cycle.
 
-    WHY USE BELLMAN-FORD FOR TRAFFIC?
-      When the Traffic Control page increases a road's weight, the graph
-      can theoretically have edges with changed weights at any time.
-      Bellman-Ford handles this correctly because it re-evaluates every edge
-      every pass — it doesn't assume monotonically increasing costs.
+    TIME COMPLEXITY:  O(E) on average, O(V × E) worst-case.
+      - Massively faster than standard Bellman-Ford for sparse graphs like roads.
 
-    TIME COMPLEXITY:  O(V × E)
-      - V = number of nodes, E = number of edges
-      - Much slower than Dijkstra's O((V+E) log V)
-      - On a 12-node grid: V=12, E≈24 → only 288 operations. Fine.
-
-    SPACE COMPLEXITY: O(V)
+    SPACE COMPLEXITY: O(V) for the queue and tracking arrays.
     """
     start_time = time.time()
 
@@ -294,56 +284,51 @@ def bellman_ford(graph, start_id, end_id):
 
     prev = {node: None for node in nodes}
 
+    # SPFA specific structures
+    queue = deque([start_id])
+    in_queue = {start_id}
+    update_count = {node: 0 for node in nodes}
+
     nodes_visited = 0
     edges_explored = 0
     explored_edges = []  # Track (u, v) for every edge examined
 
-    # Relax ALL edges exactly V-1 times
-    for iteration in range(V - 1):
-        updated = False  # Optimisation: stop early if no updates in this pass
+    while queue:
+        u = queue.popleft()
+        in_queue.remove(u)
+        nodes_visited += 1
 
-        for u in nodes:
-            nodes_visited += 1
-
-            # Skip nodes we haven't reached yet (distance still infinity)
-            if dist[u] == float('inf'):
-                continue
-
-            for v, weight in graph.get_neighbours(u):
-                edges_explored += 1
-                explored_edges.append((u, v))  # Record this edge exploration
-                new_dist = dist[u] + weight
-
-                if new_dist < dist[v]:
-                    dist[v] = new_dist
-                    prev[v] = u
-                    updated = True
-
-        # Early termination: if no distances changed, we're done
-        if not updated:
-            break
-
-    # ── Negative cycle detection ──────────────────────────────
-    # If after V-1 passes we can STILL relax an edge, there's a negative cycle
-    for u in nodes:
-        if dist[u] == float('inf'):
-            continue
         for v, weight in graph.get_neighbours(u):
-            if dist[u] + weight < dist[v]:
-                raise ValueError(f"Negative cycle detected involving nodes {u} → {v}")
+            edges_explored += 1
+            explored_edges.append((u, v))  # Record this edge exploration
+            new_dist = dist[u] + weight
+
+            if new_dist < dist[v]:
+                dist[v] = new_dist
+                prev[v] = u
+
+                # Negative cycle detection
+                update_count[v] += 1
+                if update_count[v] >= V:
+                    raise ValueError(f"Negative cycle detected involving nodes {u} → {v}")
+
+                # If v isn't already waiting in the queue, add it
+                if v not in in_queue:
+                    queue.append(v)
+                    in_queue.add(v)
 
     elapsed_ms = round((time.time() - start_time) * 1000, 3)
     path = _reconstruct_path(prev, start_id, end_id)
 
     return {
-        "algorithm":       "Bellman-Ford",
+        "algorithm":       "Bellman-Ford (SPFA)",
         "path":            path,
         "distance":        dist[end_id] if dist[end_id] != float('inf') else -1,
         "nodes_visited":   nodes_visited,
         "edges_explored":  edges_explored,
         "explored_edges":  explored_edges,          # For frontend visualization
         "execution_time_ms": elapsed_ms,
-        "complexity":      "O(V × E)",
+        "complexity":      "O(E) avg, O(V×E) worst",
         "space":           "O(V)",
     }
 

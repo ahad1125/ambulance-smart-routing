@@ -487,6 +487,10 @@
           <input type="checkbox" id="showExploration">
           <label for="showExploration">Show Exploration Visualization</label>
         </div>
+        <div class="toggle-row">
+          <input type="checkbox" id="useTraffic" checked>
+          <label for="useTraffic">Consider Traffic Congestion</label>
+        </div>
         <div id="loading" class="loading" style="display:block;margin-top:6px;">Loading map data...</div>
         <button class="btn btn-primary" onclick="findRoute()" style="margin-top:10px;">Run Simulation</button>
         <button class="btn btn-secondary" onclick="clearMap()">✕ Clear</button>
@@ -769,10 +773,12 @@
     async function runManualRoute(sourceNode, algo) {
       const dest = document.getElementById('destSelect').value;
       if (!dest) { alert('Select a destination hospital in manual mode'); return; }
+      
+      const useTraffic = document.getElementById('useTraffic').checked;
       const res = await fetch(`${API}/api/route/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: sourceNode, destination: parseInt(dest), algorithm: algo })
+        body: JSON.stringify({ source: sourceNode, destination: parseInt(dest), algorithm: algo, use_traffic: useTraffic })
       });
       const data = await res.json();
       if (data.error) { alert('Error: ' + data.error); return; }
@@ -791,10 +797,11 @@
     }
 
     async function runAutoDispatch(sourceNode, algo) {
+      const useTraffic = document.getElementById('useTraffic').checked;
       const res = await fetch(`${API}/api/dispatch/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source: sourceNode, algorithm: algo })
+        body: JSON.stringify({ source: sourceNode, algorithm: algo, use_traffic: useTraffic })
       });
       const data = await res.json();
       if (data.error) { alert('Error: ' + data.error); return; }

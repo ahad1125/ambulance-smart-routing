@@ -336,6 +336,13 @@
     <div class="controls">
       <div><label>Source Node ID</label><select id="sourceSelect"></select></div>
       <div><label>Destination Hospital</label><select id="destSelect"></select></div>
+      <div>
+        <label>Traffic</label>
+        <div style="display: flex; align-items: center; gap: 6px; height: 35px;">
+          <input type="checkbox" id="useTraffic" checked style="width:16px;height:16px;accent-color:var(--red);cursor:pointer;">
+          <label for="useTraffic" style="margin:0;cursor:pointer;">Consider Congestion</label>
+        </div>
+      </div>
       <div><label>&nbsp;</label><button class="btn" onclick="runCompare()">⚡ Run All Algorithms</button></div>
     </div>
 
@@ -392,9 +399,11 @@
       document.getElementById('resultsGrid').style.display = 'none';
       document.getElementById('tableSection').style.display = 'none';
 
+      const useTraffic = document.getElementById('useTraffic').checked;
+
       const res = await fetch(`${API}/api/compare/`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source, destination: dest })
+        body: JSON.stringify({ source, destination: dest, use_traffic: useTraffic })
       });
       const data = await res.json();
       document.getElementById('loading').style.display = 'none';
