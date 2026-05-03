@@ -1,22 +1,4 @@
-"""
-models.py — Database tables for the Smart Ambulance system.
 
-WHAT IS A MODEL?
-  Each class here becomes a table in db.sqlite3.
-  Django automatically creates SQL CREATE TABLE statements from these classes.
-
-HOW TO APPLY CHANGES:
-  After editing this file, always run:
-    python manage.py makemigrations
-    python manage.py migrate
-
-THE DATA MODEL:
-  Node     → an intersection on the Lahore road map (has lat/lon)
-  Edge     → a road segment connecting two Nodes (has distance + time weight)
-  Hospital → a hospital at a specific Node
-  Ambulance→ an ambulance stationed at a Node (can be available or busy)
-  EmergencyRequest → a logged dispatch event (patient node, ambulance, hospital)
-"""
 
 from django.db import models
 
@@ -56,7 +38,7 @@ class Edge(models.Model):
     traffic_weight = models.FloatField(default=1.0)
 
     def effective_weight(self):
-        """Returns the actual routing weight after applying traffic."""
+
         return self.distance * self.traffic_weight
 
     def __str__(self):
