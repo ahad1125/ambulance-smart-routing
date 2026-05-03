@@ -29,21 +29,9 @@ function setMapTheme(theme = 'light') {
 }
 setMapTheme('light');
 
-const hospitalIcon = L.divIcon({
-  className: '',
-  html: '<div style="background:#1e7e34;width:16px;height:16px;border-radius:3px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:10px;">H</div>',
-  iconSize: [20, 20], iconAnchor: [10, 10]
-});
-const ambulanceIcon = L.divIcon({
-  className: '',
-  html: '<div style="background:#1a56a0;width:16px;height:16px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;">A</div>',
-  iconSize: [20, 20], iconAnchor: [10, 10]
-});
-const emergencyIcon = L.divIcon({
-  className: '',
-  html: '<div style="background:#c0392b;width:18px;height:18px;border-radius:50%;border:3px solid #fff;"></div>',
-  iconSize: [18, 18], iconAnchor: [9, 9]
-});
+const hospitalIcon = L.divIcon({ className: '', html: '<div style="background:#26de81;width:16px;height:16px;border-radius:4px;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:10px;box-shadow:0 0 6px #26de81;">🏥</div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+const ambulanceIcon = L.divIcon({ className: '', html: '<div style="background:#4fc3f7;width:16px;height:16px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 0 6px #4fc3f7;">🚑</div>', iconSize: [20, 20], iconAnchor: [10, 10] });
+const emergencyIcon = L.divIcon({ className: '', html: '<div style="background:#ff4757;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px #ff4757;animation:pulse2 1s infinite;"></div><style>@keyframes pulse2{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}</style>', iconSize: [18, 18], iconAnchor: [9, 9] });
 
 function onDispatchModeChange() {
   const mode = document.getElementById('dispatchMode').value;
@@ -203,7 +191,7 @@ function animateExploration(exploredEdges, delayMs = 35) {
       const e = exploredEdges[i];
       const line = L.polyline(
         [[e.from_lat, e.from_lon], [e.to_lat, e.to_lon]],
-        { color: '#b7760d', weight: 2, opacity: 0.5, dashArray: '6 4' }
+        { color: '#ffc107', weight: 3, opacity: 0.55 }
       ).addTo(map);
       explorationLayers.push(line);
       i++;
@@ -231,8 +219,8 @@ async function runManualRoute(sourceNode, algo) {
   }
 
   const latlngs = data.path_coords.map(p => [p.lat, p.lon]);
-  const colors = { dijkstra: '#c0392b', astar: '#1e7e34', bellman_ford: '#e07b00', brute_force: '#6a3d9a' };
-  routeLayer = L.polyline(latlngs, { color: colors[algo] || '#c0392b', weight: 5, opacity: 0.9 }).addTo(map);
+  const colors = { dijkstra: '#ff4757', astar: '#26de81', bellman_ford: '#ff9f43', brute_force: '#b39ddb' };
+  routeLayer = L.polyline(latlngs, { color: colors[algo] || '#ff4757', weight: 5, opacity: 0.9 }).addTo(map);
   if (latlngs.length) map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
   animateMarkerAlongPath(latlngs, 520);
   updateStats(data);
@@ -256,8 +244,8 @@ async function runAutoDispatch(sourceNode, algo) {
   const leg2 = data.legs.patient_to_hospital.path_coords.map(p => [p.lat, p.lon]);
   const fullPath = data.path_coords.map(p => [p.lat, p.lon]);
 
-  routeLayerLeg1 = L.polyline(leg1, { color: '#1a7bbf', weight: 5, opacity: 0.95, dashArray: '10 8' }).addTo(map);
-  routeLayerLeg2 = L.polyline(leg2, { color: '#e07b00', weight: 5, opacity: 0.95 }).addTo(map);
+  routeLayerLeg1 = L.polyline(leg1, { color: '#4fc3f7', weight: 5, opacity: 0.95, dashArray: '10 8' }).addTo(map);
+  routeLayerLeg2 = L.polyline(leg2, { color: '#ff9f43', weight: 5, opacity: 0.95 }).addTo(map);
 
   const bounds = [...leg1, ...leg2];
   if (bounds.length) map.fitBounds(bounds, { padding: [45, 45] });
