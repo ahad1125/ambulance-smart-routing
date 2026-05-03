@@ -1,28 +1,4 @@
-"""
-core/algorithms/shortest_path.py
 
-PURPOSE:
-  Implements the three shortest-path algorithms used in this project.
-  Each function takes a Graph object and returns a result dict with
-  the path AND algorithm statistics (nodes visited, edges explored,
-  execution time) so the frontend can display them.
-
-ALGORITHMS:
-  1. Dijkstra   — O((V+E) log V) — guaranteed shortest path, no negative weights
-  2. A*         — O(b^d) in worst case, near-linear in practice with good heuristic
-  3. Bellman-Ford — O(VE) — handles negative/changing weights, detects negative cycles
-
-WHY ALL THREE?
-  The project brief asks us to compare them. The key differences:
-  - Dijkstra is the fastest for standard city routing.
-  - A* is faster in practice because it uses a heuristic to guide search.
-  - Bellman-Ford is slower but handles changing edge weights (traffic).
-
-CLO COVERAGE:
-  CLO 7: Graph algorithms, single-source shortest paths
-  CLO 1/2: Best/worst/expected case behaviour demonstrated via stats
-  CLO 3/5: Big-O shown in complexity field of each result
-"""
 
 import heapq  # Python's built-in min-heap (priority queue)
 import time
@@ -34,16 +10,7 @@ from collections import deque
 # ─────────────────────────────────────────────────────────────
 
 def _reconstruct_path(prev, start_id, end_id):
-    """
-    Works backwards from end_id using the prev dict to rebuild the path.
 
-    HOW:
-      During Dijkstra/A*, whenever we find a better route to a node v,
-      we store prev[v] = u (meaning "we came from u to reach v").
-      After the algorithm finishes, we trace back: end → ... → start.
-
-    TIME COMPLEXITY: O(path length) — usually O(V) in worst case.
-    """
     path = []
     current = end_id
 
@@ -66,31 +33,7 @@ def _reconstruct_path(prev, start_id, end_id):
 # ─────────────────────────────────────────────────────────────
 
 def dijkstra(graph, start_id, end_id):
-    """
-    Finds the shortest path from start_id to end_id using Dijkstra's algorithm.
 
-    HOW IT WORKS:
-      - Uses a min-heap (priority queue) to always process the node with
-        the smallest known distance first.
-      - Maintains a dist[] table: dist[v] = shortest known distance to v.
-      - For each node popped, relaxes all its outgoing edges:
-          if dist[u] + w(u,v) < dist[v]:  → update dist[v] and push to heap
-
-    WHY IT WORKS (Greedy Choice Property):
-      Because all edge weights are non-negative, once a node is popped
-      from the min-heap with distance d, d IS the shortest possible
-      distance to that node. We can never find a shorter path later.
-
-    TIME COMPLEXITY:  O((V + E) log V)
-      - Each node is pushed/popped from heap at most once: O(V log V)
-      - Each edge causes at most one push: O(E log V)
-      - Total: O((V + E) log V)
-
-    SPACE COMPLEXITY: O(V) — we store dist[], prev[], and the heap
-
-    LIMITATION: Does NOT work with negative edge weights.
-    If traffic can make weights negative, use Bellman-Ford instead.
-    """
     start_time = time.time()
 
     # Initialise all distances to infinity (unknown)
@@ -156,37 +99,7 @@ def dijkstra(graph, start_id, end_id):
 # ─────────────────────────────────────────────────────────────
 
 def astar(graph, start_id, end_id):
-    """
-    Finds the shortest path using A* (A-star) — a heuristic-guided search.
 
-    HOW IT WORKS:
-      A* is like Dijkstra but smarter. Instead of just using the known
-      cost g(n) to reach a node, it also uses an estimate h(n) of the
-      remaining distance to the goal:
-
-        f(n) = g(n) + h(n)
-
-      The min-heap is sorted by f(n), so we explore nodes that are
-      BOTH close to the start AND close to the goal.
-
-    THE HEURISTIC h(n):
-      We use Euclidean distance (straight-line) between node n and the goal.
-      This is ADMISSIBLE — it never overestimates the true distance —
-      which guarantees A* finds the optimal path.
-
-    WHY A* IS FASTER THAN DIJKSTRA IN PRACTICE:
-      Dijkstra explores all nodes equally in all directions.
-      A* focuses its search toward the goal, exploring fewer nodes.
-      On the simulation page you'll see: A* visits ~40 nodes while
-      Dijkstra visits ~120 on the same graph.
-
-    TIME COMPLEXITY:  O(b^d) worst case, near-linear with good heuristic
-      b = branching factor (avg neighbours per node)
-      d = depth of solution
-    SPACE COMPLEXITY: O(V) — open/closed sets
-
-    REQUIREMENT: Heuristic must be admissible (never overestimates).
-    """
     start_time = time.time()
 
     # g_cost[v] = actual cost from start to v
@@ -254,25 +167,7 @@ def astar(graph, start_id, end_id):
 # ─────────────────────────────────────────────────────────────
 
 def bellman_ford(graph, start_id, end_id):
-    """
-    Finds the shortest path using the Shortest Path Faster Algorithm (SPFA),
-    which is a highly optimized queue-based version of Bellman-Ford.
 
-    HOW IT WORKS:
-      Standard Bellman-Ford blindly relaxes all edges V-1 times.
-      SPFA improves this by using a queue. If a node's distance wasn't
-      updated, there's no need to check its neighbours. We only queue
-      nodes whose distances have improved.
-
-      NEGATIVE CYCLE DETECTION:
-        If a node is added to the queue V times, it means we are endlessly
-        finding shorter paths, which implies a negative cycle.
-
-    TIME COMPLEXITY:  O(E) on average, O(V × E) worst-case.
-      - Massively faster than standard Bellman-Ford for sparse graphs like roads.
-
-    SPACE COMPLEXITY: O(V) for the queue and tracking arrays.
-    """
     start_time = time.time()
 
     nodes = graph.all_nodes()
@@ -338,26 +233,7 @@ def bellman_ford(graph, start_id, end_id):
 # ─────────────────────────────────────────────────────────────
 
 def brute_force(graph, start_id, end_id, max_nodes=10):
-    """
-    Tries all possible paths from start to end using DFS with backtracking.
 
-    WHY INCLUDE THIS?
-      CLO 6 requires us to demonstrate the Brute Force strategy.
-      Showing O(n!) vs O((V+E) log V) on the comparison page makes the
-      value of Dijkstra/A* concrete and tangible.
-
-    HOW IT WORKS:
-      We do a DFS, tracking visited nodes to avoid cycles.
-      At each step we try ALL unvisited neighbours.
-      This generates every possible simple path — factorial in count.
-
-    TIME COMPLEXITY:  O(n!) in worst case
-      For n=10 nodes: 10! = 3,628,800 paths checked.
-      For n=20 nodes: 20! ≈ 2.4 × 10^18 — computationally infeasible.
-
-    IMPORTANT: We cap at max_nodes to prevent infinite loops on large graphs.
-    On the comparison page, we only run this on small sub-graphs.
-    """
     start_time = time.time()
     nodes_visited = [0]
     edges_explored = [0]

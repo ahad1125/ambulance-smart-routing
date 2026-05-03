@@ -1,31 +1,4 @@
-"""
-core/algorithms/mst.py
 
-PURPOSE:
-  Implements Prim's and Kruskal's algorithms to find the
-  Minimum Spanning Tree (MST) of the road network.
-
-WHAT IS AN MST?
-  Given a connected, weighted graph, an MST is a subset of edges that:
-    1. Connects ALL nodes (spanning)
-    2. Has NO cycles (tree)
-    3. Has the MINIMUM total weight of all such spanning trees
-
-USE CASE IN THIS PROJECT:
-  "What is the minimum total road length needed to connect all hospitals?"
-  If you're building new roads to connect hospitals, the MST tells you
-  the cheapest way to do it with zero redundancy.
-
-GREEDY APPROACH:
-  Both Prim's and Kruskal's are GREEDY algorithms:
-  they always pick the locally best option (cheapest edge) at each step.
-  The Greedy Choice Property guarantees this produces a globally optimal result.
-
-CLO COVERAGE:
-  CLO 6: Greedy design strategy
-  CLO 7: MST algorithms
-  CLO 3/5: Big-O complexity analysis
-"""
 
 import heapq  # For Prim's priority queue
 import time
@@ -36,31 +9,7 @@ import time
 # ─────────────────────────────────────────────────────────────
 
 def prims(graph):
-    """
-    Finds the MST by growing ONE tree from an arbitrary starting node.
 
-    HOW IT WORKS:
-      1. Start from any node. Add it to the MST set.
-      2. Find the minimum-weight edge that connects the MST set to
-         a node NOT yet in the MST set.
-      3. Add that edge and the new node to the MST set.
-      4. Repeat until all nodes are in the MST.
-
-    ANALOGY: It's like building a road network starting from one city —
-    at each step you build the cheapest possible road to a new city.
-
-    WHY USE A PRIORITY QUEUE?
-      At each step we need the minimum-weight edge crossing the cut.
-      A min-heap lets us get that minimum in O(log E) instead of O(E).
-
-    TIME COMPLEXITY:  O((V + E) log V) with a binary heap
-      - Each node added to MST: V heap pops = O(V log V)
-      - Each edge pushed to heap: E pushes = O(E log V)
-
-    SPACE COMPLEXITY: O(V + E) — heap can hold all edges
-
-    BEST FOR: Dense graphs (many edges) where V is small relative to E.
-    """
     start_time = time.time()
     nodes = graph.all_nodes()
 
@@ -137,28 +86,7 @@ def prims(graph):
 # ─────────────────────────────────────────────────────────────
 
 class UnionFind:
-    """
-    A data structure that tracks connected components.
 
-    OPERATIONS:
-      find(x) → returns the "representative" (root) of x's component
-      union(x, y) → merges the components of x and y
-
-    WHY IT'S NEEDED:
-      Kruskal's adds edges in order of increasing weight.
-      Before adding an edge (u, v), we need to check: are u and v
-      already connected? If yes, adding this edge would create a cycle.
-      UnionFind answers "are they connected?" in nearly O(1).
-
-    OPTIMISATIONS:
-      1. Union by rank: attach smaller tree under larger tree
-         → keeps the tree shallow → faster find()
-      2. Path compression: when doing find(), make all nodes on the path
-         point directly to root → even faster future finds()
-
-    TIME COMPLEXITY:  O(α(n)) per operation, where α is the inverse
-                      Ackermann function — essentially constant.
-    """
 
     def __init__(self, elements):
         # Each element is its own parent initially (one-node components)
@@ -167,21 +95,14 @@ class UnionFind:
         self.rank   = {e: 0 for e in elements}
 
     def find(self, x):
-        """
-        Returns the root (representative) of x's component.
-        Uses PATH COMPRESSION: after finding root, make x point directly to it.
-        """
+
         if self.parent[x] != x:
             # Recursively find root, then compress the path
             self.parent[x] = self.find(self.parent[x])
         return self.parent[x]
 
     def union(self, x, y):
-        """
-        Merges the components of x and y.
-        Uses UNION BY RANK to keep the tree balanced.
-        Returns False if x and y were already in the same component (cycle!).
-        """
+
         root_x = self.find(x)
         root_y = self.find(y)
 
@@ -207,35 +128,7 @@ class UnionFind:
 # ─────────────────────────────────────────────────────────────
 
 def kruskals(graph):
-    """
-    Finds the MST by sorting ALL edges and greedily adding the cheapest
-    edge that doesn't create a cycle.
 
-    HOW IT WORKS:
-      1. Sort ALL edges by weight (cheapest first).
-      2. For each edge (u, v) in order:
-           - If u and v are in different components → add edge to MST (safe)
-           - If u and v are already connected → skip (would create cycle)
-      3. Stop when MST has V-1 edges (all nodes connected).
-
-    USES UNION-FIND to check in O(α(n)) ≈ O(1) whether adding an edge
-    would create a cycle.
-
-    TIME COMPLEXITY:  O(E log E)
-      - Sorting E edges: O(E log E)
-      - Union-Find operations: nearly O(E)
-      - Total: dominated by sorting → O(E log E)
-      Note: O(E log E) ≈ O(E log V) since E ≤ V²
-
-    SPACE COMPLEXITY: O(V + E) — store all edges, UnionFind for all nodes
-
-    BEST FOR: Sparse graphs (few edges) since we sort all edges first.
-
-    COMPARE WITH PRIM'S:
-      Prim's grows one tree → better for dense graphs
-      Kruskal's sorts all edges → better for sparse graphs
-      For our Lahore grid, both give the SAME MST (just computed differently)
-    """
     start_time = time.time()
     nodes = graph.all_nodes()
 
